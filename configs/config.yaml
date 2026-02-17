@@ -1,0 +1,8 @@
+defaults:
+  - _self_
+  - data: default
+  - model: xgboost
+  - pipeline: train
+
+experiment_name: "tau_supersymmetry_v1"
+seed: 42
