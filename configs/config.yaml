@@ -2,7 +2,7 @@ defaults:
   - _self_
   - data: default
   - model: xgboost
-  - pipeline: train
+  - pipeline: default
 
-experiment_name: "tau_supersymmetry_v1"
-seed: 42
+experiment_name: "tau-supersymmetry-baseline"
+seed: 1
