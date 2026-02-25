@@ -4,3 +4,5 @@ data/
 mlruns/
 .env
 .DS_Store
+mlruns.db
+outputs/
