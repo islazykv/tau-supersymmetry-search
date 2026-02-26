@@ -10,6 +10,6 @@ RUN uv sync --no-dev
 
 COPY src/ src/
 COPY configs/ configs/
-COPY train.py .
+COPY preprocess.py train.py ./
 
 CMD ["uv", "run", "--no-dev", "python", "train.py"]
