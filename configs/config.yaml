@@ -12,6 +12,7 @@ defaults:
   - samples@samples.fake: fake
   - samples@samples.signal: signal
   - samples@samples.data: data
+  - override hydra/job_logging: default
 
 experiment_name: "tau-supersymmetry-baseline"
 seed: 1
