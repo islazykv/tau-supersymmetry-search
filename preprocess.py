@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base="1.3", config_path="configs", config_name="config")
 def main(cfg: DictConfig):
+    """Run the full preprocessing pipeline: process, merge, assign classes, and save."""
     samples = resolve_samples(cfg)
 
     log.info(
@@ -34,30 +35,26 @@ def main(cfg: DictConfig):
     )
 
     # --- process ---
-    processed = {}
+    processed_bg = process_samples(
+        cfg, "background", [s.id for s in samples["background"]]
+    )
+    log.info("Processed %d background samples", len(processed_bg))
 
-    if samples["background"]:
-        log.info("Processing %d background samples", len(samples["background"]))
-        processed["background"] = process_samples(
-            cfg, "background", [s.id for s in samples["background"]]
-        )
-
-    if samples["signal"]:
-        log.info("Processing %d signal samples", len(samples["signal"]))
-        processed["signal"] = process_samples(
-            cfg, "signal", [s.id for s in samples["signal"]]
-        )
+    processed_signal = (
+        process_samples(cfg, "signal", [s.id for s in samples["signal"]])
+        if samples["signal"]
+        else {}
+    )
+    if processed_signal:
+        log.info("Processed %d signal samples", len(processed_signal))
 
     # --- merge ---
-    if "background" in processed:
-        merged = merge_backgrounds(processed["background"], cfg)
-        log.info("Merged backgrounds into %d group(s)", len(merged))
-    else:
-        merged = {}
+    merged = merge_backgrounds(processed_bg, cfg)
+    log.info("Merged backgrounds into %d group(s)", len(merged))
 
-    if "signal" in processed:
-        merged = combine_background_signal(merged, processed["signal"])
-        log.info("Combined %d signal sample(s)", len(processed["signal"]))
+    if processed_signal:
+        merged = combine_background_signal(merged, processed_signal)
+        log.info("Combined %d signal sample(s)", len(processed_signal))
 
     assign_class(merged)
     log.info("Assigned class labels: %s", list(merged.keys()))

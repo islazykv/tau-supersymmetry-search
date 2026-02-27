@@ -12,22 +12,7 @@ def merge_backgrounds(
     samples: dict[str, ak.Array],
     cfg: DictConfig,
 ) -> dict[str, ak.Array]:
-    """Merge background samples according to the merge config.
-
-    Parameters
-    ----------
-    samples:
-        Dict of sample_id -> awkward array (unmerged backgrounds).
-    cfg:
-        Full Hydra config (needs ``merge.background_strategy`` and
-        ``merge.primary_groups``).
-
-    Returns
-    -------
-    Merged dict.  With ``as_one`` strategy a single ``'background'`` key is
-    returned.  With ``as_primary`` the keys are the group names defined in the
-    merge config.
-    """
+    """Merge background samples into groups according to the strategy defined in cfg."""
     strategy = cfg.merge.background_strategy
 
     if strategy == "as_one":

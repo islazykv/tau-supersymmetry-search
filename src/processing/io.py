@@ -9,10 +9,7 @@ log = logging.getLogger(__name__)
 
 
 def save_samples(samples: dict[str, ak.Array], output_dir: Path) -> None:
-    """Save each sample as a parquet file under *output_dir*.
-
-    Files are written as ``<sample_id>.parquet``.
-    """
+    """Save each sample array as a parquet file under output_dir."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -26,19 +23,7 @@ def load_samples(
     input_dir: Path,
     sample_ids: list[str],
 ) -> dict[str, ak.Array]:
-    """Load parquet files into a dict keyed by sample id.
-
-    Parameters
-    ----------
-    input_dir:
-        Directory containing ``<sample_id>.parquet`` files.
-    sample_ids:
-        Which samples to load.
-
-    Returns
-    -------
-    Dict mapping each sample_id to its awkward array.
-    """
+    """Load parquet files from input_dir and return a dict keyed by sample id."""
     input_dir = Path(input_dir)
     out: dict[str, ak.Array] = {}
 

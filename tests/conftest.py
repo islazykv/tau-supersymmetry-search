@@ -46,7 +46,7 @@ def ml_cfg():
                 },
                 "signal": {"enabled": False},
             },
-            "data": {"processed_path": "data/processed/run2/output.parquet"},
+            "data": {"processed_path": "data/processed"},
             "merge": {
                 "background_strategy": "as_one",
                 "primary_groups": {

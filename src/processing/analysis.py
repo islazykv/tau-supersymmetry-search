@@ -48,11 +48,7 @@ def _discover_signals(scan_path: str, filter_patterns: list[str]) -> list[Sample
 
 
 def resolve_samples(cfg: DictConfig) -> dict[str, list[Sample]]:
-    """Build sample lists from the Hydra config, applying excludes and signal discovery.
-
-    Returns a dict with keys 'data', 'background', 'signal', each mapping
-    to a list of Sample objects (empty list if the category is disabled).
-    """
+    """Build and return categorized sample lists from Hydra config, applying excludes and signal discovery."""
     result: dict[str, list[Sample]] = {}
 
     # --- data ---
@@ -89,12 +85,9 @@ def resolve_samples(cfg: DictConfig) -> dict[str, list[Sample]]:
 
 
 def get_output_paths(cfg: DictConfig) -> dict[str, Path]:
-    """Compute output directory paths from analysis config values.
-
-    Returns a dict with 'output_dir' and 'plots_dir' Path objects.
-    """
+    """Compute and return output and plots directory paths from analysis config values."""
     analysis = cfg.analysis
-    base = Path(cfg.data.processed_path).parent
+    base = Path(cfg.data.processed_path)
     output_dir = (
         base
         / analysis.scope

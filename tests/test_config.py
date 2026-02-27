@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from hydra import compose, initialize_config_dir
 from pathlib import Path
+
+from hydra import compose, initialize_config_dir
 
 
 def test_config_resolves():

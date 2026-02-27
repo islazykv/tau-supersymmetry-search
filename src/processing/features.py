@@ -4,20 +4,7 @@ from omegaconf import DictConfig, OmegaConf
 
 
 def resolve_features(cfg: DictConfig) -> list[str]:
-    """Build a flat feature list from the Hydra features config.
-
-    For the ML scope the config is structured by category (cleaning, truth,
-    weights, tau, jet, kinematic, training, channel_1, channel_2).
-    Channel-specific groups are appended based on the analysis channel.
-
-    For the NTuples / CC scopes the config contains a flat ``features`` list
-    which is returned as-is.
-
-    Parameters
-    ----------
-    cfg:
-        Full Hydra config (must contain ``features`` and ``analysis`` groups).
-    """
+    """Build and return a flat feature list from the Hydra features config based on scope and channel."""
     feat_cfg = cfg.features
     scope = cfg.analysis.scope
     channel = str(cfg.analysis.channel) if cfg.analysis.channel is not None else None
