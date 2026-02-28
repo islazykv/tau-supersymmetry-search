@@ -132,12 +132,7 @@ def merge_signals(
 def split_mc_data(
     grouped: dict[str, dict[str, ak.Array]],
 ) -> tuple[dict[str, ak.Array], dict[str, ak.Array]]:
-    """Split grouped samples into MC (background + signal) and data.
-
-    Returns:
-        samples_mc:   background + signal, used for ML training.
-        samples_data: data only, used for validation/plotting.
-    """
+    """Split grouped samples into MC (background + signal) and data."""
     samples_mc = {**grouped.get("background", {}), **grouped.get("signal", {})}
     samples_data = dict(grouped.get("data", {}))
     return samples_mc, samples_data

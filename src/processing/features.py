@@ -4,6 +4,16 @@ import awkward as ak
 from omegaconf import DictConfig, OmegaConf
 
 
+def extract_feature_from_array(array_in: ak.Array, feature_name: str) -> ak.Array:
+    """Extract a single feature field from an awkward array."""
+    return array_in[feature_name]
+
+
+def drop_features(array_in: ak.Array, feature_list: list[str]) -> ak.Array:
+    """Return the array with the specified feature fields removed."""
+    return array_in[[f for f in ak.fields(array_in) if f not in feature_list]]
+
+
 def assign_event_origin(grouped: dict[str, dict[str, ak.Array]]) -> None:
     """Add an ``'eventOrigin'`` field to each array in-place, set to the sample id."""
     for category in grouped.values():
@@ -17,11 +27,9 @@ def resolve_features(cfg: DictConfig) -> list[str]:
     scope = cfg.analysis.scope
     channel = str(cfg.analysis.channel) if cfg.analysis.channel is not None else None
 
-    # NTuples and CC store a flat list under the ``features`` key.
     if scope in ("NTuples", "CC"):
         return list(OmegaConf.to_container(feat_cfg.features, resolve=True))
 
-    # ML scope: assemble from category groups.
     features: list[str] = []
     for group in (
         "cleaning",
