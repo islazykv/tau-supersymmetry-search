@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import awkward as ak
+import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
 
@@ -19,6 +20,24 @@ def assign_event_origin(grouped: dict[str, dict[str, ak.Array]]) -> None:
     for category in grouped.values():
         for sid, array in category.items():
             category[sid] = ak.with_field(array, sid, "eventOrigin")
+
+
+def assign_class_weights(df: pd.DataFrame) -> pd.Series:
+    """Add a 'class_weight' column to df in-place and return the per-class weight mapping."""
+    if "class" not in df.columns:
+        raise ValueError("DataFrame must contain a 'class' column.")
+
+    class_counts = df["class"].value_counts()
+
+    if class_counts.min() == 0:
+        raise ValueError(
+            "Cannot compute class weights: at least one class has zero events."
+        )
+
+    weights = class_counts.min() / class_counts
+    df["class_weight"] = df["class"].map(weights)
+
+    return weights.sort_index()
 
 
 def resolve_features_to_drop(cfg: DictConfig) -> list[str]:

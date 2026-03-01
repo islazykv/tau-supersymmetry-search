@@ -13,6 +13,7 @@ pyrootutils.setup_root(
 
 from src.processing.analysis import get_output_paths  # noqa: E402
 from src.processing.features import (  # noqa: E402
+    assign_class_weights,
     assign_event_origin,
     drop_features,
     extract_feature_from_array,
@@ -109,6 +110,10 @@ def main(cfg: DictConfig):
     # --- reattach ---
     df_mc["eventOrigin"] = event_origin
     df_mc["tau_n"] = tau_n
+
+    # --- class weights ---
+    weights = assign_class_weights(df_mc)
+    log.info("Class weights: %s", weights.to_dict())
 
     # --- save ---
     dataframes_dir = output_paths["dataframes_dir"]
