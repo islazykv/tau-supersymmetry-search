@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 import atlas_mpl_style as ampl
 import matplotlib.pyplot as plt
@@ -29,3 +30,10 @@ def apply_atlas_style():
     except Exception as e:
         print(f"Notice: ATLAS style fallback (Error: {e})")
         plt.rc("text", usetex=False)
+
+
+def save_figure(fig: plt.Figure, path: Path, dpi: int = 150) -> None:
+    """Save a matplotlib figure to disk, creating parent directories as needed."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=dpi, bbox_inches="tight")
