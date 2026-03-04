@@ -333,7 +333,9 @@ def process_samples(
                 if sample_id not in data_out:
                     data_out[sample_id] = ar
                 else:
-                    data_out[sample_id] = ak.concatenate([data_out[sample_id], ar], axis=0)
+                    data_out[sample_id] = ak.concatenate(
+                        [data_out[sample_id], ar], axis=0
+                    )
 
                 pbar.update(1)
 

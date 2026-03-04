@@ -35,7 +35,9 @@ def main(cfg: DictConfig):
     data = process_samples(cfg, "data", [s.id for s in sample_lists["data"]])
     log.info("Processed %d data sample(s)", len(data))
 
-    background = process_samples(cfg, "background", [s.id for s in sample_lists["background"]])
+    background = process_samples(
+        cfg, "background", [s.id for s in sample_lists["background"]]
+    )
     log.info("Processed %d background samples", len(background))
 
     signal = process_samples(cfg, "signal", [s.id for s in sample_lists["signal"]])

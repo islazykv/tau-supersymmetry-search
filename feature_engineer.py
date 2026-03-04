@@ -87,7 +87,11 @@ def main(cfg: DictConfig):
         nan_threshold=0.0,
     )
     log.info("Rectangularized MC: %d rows, %d columns", len(df_mc), len(df_mc.columns))
-    log.info("Rectangularized data: %d rows, %d columns", len(df_data), len(df_data.columns))
+    log.info(
+        "Rectangularized data: %d rows, %d columns",
+        len(df_data),
+        len(df_data.columns),
+    )
 
     # --- align ---
     df_data = df_data[df_mc.columns.intersection(df_data.columns)]
