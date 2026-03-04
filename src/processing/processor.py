@@ -6,6 +6,7 @@ import awkward as ak
 import numpy as np
 import uproot
 from omegaconf import DictConfig
+from tqdm.auto import tqdm
 
 from src.processing.features import resolve_features
 
@@ -265,7 +266,6 @@ def _compute_weight(ar: ak.Array) -> ak.Array:
         * ar.beamSpotWeight
         * ar.jvt_weight
         * ar.bjet_weight
-        * ar.tau_medium_weight
         * ar.ele_weight
         * ar.mu_weight
     )
@@ -304,25 +304,37 @@ def process_samples(
 
     data_out: dict[str, ak.Array] = {}
 
-    for sample_id in sample_ids:
-        for j, campaign in enumerate(cfg.analysis.campaigns):
-            path = _resolve_path(cfg, sample_type, campaign, sample_id)
+    campaigns = list(cfg.analysis.campaigns)
+    total_files = len(sample_ids) * len(campaigns)
 
-            with uproot.open(path) as root_file:
-                tree = root_file[tree_name]
-                ar = tree.arrays(load_features, library="ak")
+    with tqdm(total=total_files, desc=f"Processing {sample_type}", unit="file") as pbar:
+        for sample_id in sample_ids:
+            for j, campaign in enumerate(campaigns):
+                pbar.set_postfix(sample=sample_id, campaign=campaign)
+                path = _resolve_path(cfg, sample_type, campaign, sample_id)
 
-            ar = _apply_channel_cuts(ar, channel, ntau, region)
-            ar = _apply_cleaning_cuts(ar)
-            ar = _apply_rnn_cuts(ar, ntau)
-            ar = _apply_truth_cuts(ar, ntau, sample_type, scope)
-            ar = _apply_kinematic_cuts(ar, scope, subject)
-            ar = _apply_region_cuts(ar, region, channel, ntau, subject, sub_subject)
-            ar = _compute_weight(ar)
+                try:
+                    with uproot.open(path) as root_file:
+                        tree = root_file[tree_name]
+                        ar = tree.arrays(load_features, library="ak")
+                except FileNotFoundError:
+                    log.warning("File not found, skipping: %s", path)
+                    pbar.update(1)
+                    continue
 
-            if j == 0:
-                data_out[sample_id] = ar
-            else:
-                data_out[sample_id] = ak.concatenate([data_out[sample_id], ar], axis=0)
+                ar = _apply_channel_cuts(ar, channel, ntau, region)
+                ar = _apply_cleaning_cuts(ar)
+                ar = _apply_rnn_cuts(ar, ntau)
+                ar = _apply_truth_cuts(ar, ntau, sample_type, scope)
+                ar = _apply_kinematic_cuts(ar, scope, subject)
+                ar = _apply_region_cuts(ar, region, channel, ntau, subject, sub_subject)
+                ar = _compute_weight(ar)
+
+                if sample_id not in data_out:
+                    data_out[sample_id] = ar
+                else:
+                    data_out[sample_id] = ak.concatenate([data_out[sample_id], ar], axis=0)
+
+                pbar.update(1)
 
     return data_out

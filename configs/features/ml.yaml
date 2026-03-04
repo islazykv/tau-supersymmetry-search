@@ -13,7 +13,6 @@ weights:
   - mcEventWeight
   - pileupweight
   - beamSpotWeight
-  - tau_medium_weight
   - ele_weight
   - mu_weight
   - jvt_weight
@@ -53,9 +52,7 @@ kinematic:
   - sumMTTauJet
   - met
   - met_phi
-  - METSigSoftTrk
   - METSig
-  - METSigPow3
   - meff
   - ht
 

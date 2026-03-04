@@ -14,7 +14,6 @@ pyrootutils.setup_root(
 from src.processing.analysis import get_output_paths  # noqa: E402
 from src.processing.features import (  # noqa: E402
     assign_class_weights,
-    assign_event_origin,
     drop_features,
     extract_feature_from_array,
     resolve_features_to_drop,
@@ -24,7 +23,6 @@ from src.processing.merger import (  # noqa: E402
     assign_class,
     dict_to_array,
     group_samples,
-    merge_signals,
     split_mc_data,
 )
 from src.processing.rectangularizer import fill_padding, rectangularize_pad_array  # noqa: E402
@@ -34,7 +32,7 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base="1.3", config_path="configs", config_name="config")
 def main(cfg: DictConfig):
-    """Run the full feature engineering pipeline: load, merge, rectify, and save."""
+    """Run the full feature engineering pipeline: load, split, rectify, and save."""
     output_paths = get_output_paths(cfg)
     input_dir = output_paths["samples_dir"]
 
@@ -51,13 +49,6 @@ def main(cfg: DictConfig):
         len(grouped["background"]),
         len(grouped["signal"]),
     )
-
-    # --- label ---
-    assign_event_origin(grouped)
-
-    # --- merge signals ---
-    grouped["signal"] = merge_signals(grouped["signal"], cfg)
-    log.info("Merged signal into %d group(s)", len(grouped["signal"]))
 
     # --- split ---
     samples_mc, samples_data = split_mc_data(grouped)
@@ -96,9 +87,7 @@ def main(cfg: DictConfig):
         nan_threshold=0.0,
     )
     log.info("Rectangularized MC: %d rows, %d columns", len(df_mc), len(df_mc.columns))
-    log.info(
-        "Rectangularized data: %d rows, %d columns", len(df_data), len(df_data.columns)
-    )
+    log.info("Rectangularized data: %d rows, %d columns", len(df_data), len(df_data.columns))
 
     # --- align ---
     df_data = df_data[df_mc.columns.intersection(df_data.columns)]

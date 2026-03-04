@@ -1,6 +1,6 @@
 enabled: true
 
-scan_path: "/disk/atlas3/data_MC/{analysis_base}/PHYS/{campaign}/vector_XEplateau/"
+scan_path: "/disk/atlas3/data_MC/{analysis_base}/{campaign}/vector_XEplateau/"
 filter_patterns:
   - "SS"
   - "GG"

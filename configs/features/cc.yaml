@@ -97,9 +97,7 @@ features:
   - met_phi
   - metNoMuon
   - metNoMuon_phi
-  - METSigSoftTrk
   - METSig
-  - METSigPow3
   - METSigSoftSub
   - METoverPtMean
   - METoverPtMean12
@@ -108,7 +106,6 @@ features:
   - mcEventWeight
   - pileupweight
   - beamSpotWeight
-  - tau_medium_weight
   - ele_weight
   - mu_weight
   - jvt_weight

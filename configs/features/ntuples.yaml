@@ -31,7 +31,6 @@ features:
   - mcEventWeight
   - pileupweight
   - beamSpotWeight
-  - tau_medium_weight
   - ele_weight
   - mu_weight
   - jvt_weight
@@ -39,7 +38,6 @@ features:
   - jet_btag_weight
   - lumiweight
   - tau_isTruthMatchedTau
-  - METSigSoftTrk_seed
   - METSig_seed
   - METSigPow3_seed
   - METSigSoftSub_seed
