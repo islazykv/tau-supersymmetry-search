@@ -17,13 +17,13 @@ pyrootutils.setup_root(
 from src.eda.checks import (  # noqa: E402
     summarize_feature_ranges,
     summarize_missing,
-    summarize_zeros,
 )
 from src.eda.plots import (  # noqa: E402
     plot_class_balance,
     plot_correlation_matrix,
     plot_feature_distributions,
 )
+from src.eda.utils import get_class_names  # noqa: E402
 from src.processing.analysis import get_output_paths  # noqa: E402
 from src.processing.io import load_dataframe  # noqa: E402
 from src.visualization.plots import save_figure  # noqa: E402
@@ -46,7 +46,7 @@ def main(cfg: DictConfig):
     log.info("Loaded MC: %d rows, %d columns", len(df_mc), len(df_mc.columns))
 
     # --- class labels ---
-    class_names = df_mc.groupby("class")["eventOrigin"].first().sort_index().tolist()
+    class_names = get_class_names(df_mc)
     log.info("Classes: %s", class_names)
 
     # --- data quality ---
@@ -55,11 +55,6 @@ def main(cfg: DictConfig):
         log.info("Missing values: none")
     else:
         log.warning("Missing values detected:\n%s", missing.to_string())
-
-    zeros = summarize_zeros(df_mc, exclude=list(_NON_TRAINING_COLS))
-    log.info(
-        "Zero-value summary (%d columns with zeros):\n%s", len(zeros), zeros.to_string()
-    )
 
     ranges = summarize_feature_ranges(df_mc)
     log.info(
