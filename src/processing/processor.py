@@ -100,15 +100,15 @@ def _apply_truth_cuts(
     if scope == "NTuples":
         return ar
 
-    if sample_type == "background":
-        if ntau == "1":
-            ar = ar[ar.tau_isTruthMatchedTau[:, 0] == 1]
-            ar = ar[ar.tau_truthType[:, 0] == 10]
-        elif ntau == "2":
-            ar = ar[ar.tau_isTruthMatchedTau[:, 0] == 1]
-            ar = ar[ar.tau_truthType[:, 0] == 10]
-            ar = ar[ar.tau_isTruthMatchedTau[:, 1] == 1]
-            ar = ar[ar.tau_truthType[:, 1] == 10]
+    # if sample_type == "background":
+    #     if ntau == "1":
+    #         ar = ar[ar.tau_isTruthMatchedTau[:, 0] == 1]
+    #         ar = ar[ar.tau_truthType[:, 0] == 10]
+    #     elif ntau == "2":
+    #         ar = ar[ar.tau_isTruthMatchedTau[:, 0] == 1]
+    #         ar = ar[ar.tau_truthType[:, 0] == 10]
+    #         ar = ar[ar.tau_isTruthMatchedTau[:, 1] == 1]
+    #         ar = ar[ar.tau_truthType[:, 1] == 10]
 
     return ar
 

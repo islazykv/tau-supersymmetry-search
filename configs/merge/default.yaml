@@ -5,12 +5,19 @@ primary_groups:
   topquarks:
     - ttbar
     - singletop
+    - ttX
   wtaunu:
     - wtaunu
   ztautau:
     - ztautau
   diboson:
     - diboson
+  other:
+    - wenu
+    - wmunu
+    - zee
+    - zmumu
+    - znunu
 
 signal_type_names:
   GG: gluinos

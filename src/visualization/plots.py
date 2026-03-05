@@ -1,8 +1,11 @@
 import os
 import shutil
+import warnings
 from pathlib import Path
 
-import atlas_mpl_style as ampl
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import atlas_mpl_style as ampl
 import matplotlib.pyplot as plt
 
 
