@@ -8,24 +8,41 @@ _DEFAULT_SIGNAL_TYPE_NAMES: dict[str, str] = {
 }
 
 
-def get_class_names(
+def get_class_names(df: pd.DataFrame) -> list[str]:
+    """Derive ordered internal class names from eventOrigin.
+
+    Returns the eventOrigin key for single-origin classes (backgrounds) and
+    'signal' for multi-origin classes (merged signal).
+    """
+    class_names: list[str] = []
+    for _cls, group in df.groupby("class", sort=True):
+        origins = group["eventOrigin"].unique()
+        class_names.append(origins[0] if len(origins) == 1 else "signal")
+    return class_names
+
+
+def get_class_labels(
     df: pd.DataFrame,
     display_labels: dict[str, str] | None = None,
     signal_type_names: dict[str, str] | None = None,
 ) -> list[str]:
-    """Derive ordered class display names from eventOrigin, applying display_labels for background groups and prefix matching for merged signal classes."""
+    """Derive ordered class display labels from eventOrigin.
+
+    Applies display_labels for background groups and prefix matching for merged
+    signal classes.
+    """
     if signal_type_names is None:
         signal_type_names = _DEFAULT_SIGNAL_TYPE_NAMES
     if display_labels is None:
         display_labels = {}
 
-    class_names: list[str] = []
+    class_labels: list[str] = []
     for _cls, group in df.groupby("class", sort=True):
         origins = group["eventOrigin"].unique()
 
         if len(origins) == 1:
             origin = origins[0]
-            class_names.append(display_labels.get(origin, origin))
+            class_labels.append(display_labels.get(origin, origin))
             continue
 
         # Multiple origins → signal class; resolve from prefixes
@@ -33,8 +50,8 @@ def get_class_names(
         matched = {p: n for p, n in signal_type_names.items() if p in prefixes}
 
         if len(matched) == 1:
-            class_names.append(next(iter(matched.values())))
+            class_labels.append(next(iter(matched.values())))
         else:
-            class_names.append("signal")
+            class_labels.append("signal")
 
-    return class_names
+    return class_labels

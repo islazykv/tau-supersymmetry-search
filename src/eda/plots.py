@@ -9,8 +9,8 @@ import seaborn as sns
 _NON_TRAINING_COLS = {"class", "class_weight", "tau_n", "eventOrigin"}
 
 
-def _resolve_class_names(df: pd.DataFrame) -> list[str]:
-    """Derive ordered class names from eventOrigin, falling back to integer class labels."""
+def _resolve_class_labels(df: pd.DataFrame) -> list[str]:
+    """Derive ordered class labels from eventOrigin, falling back to integer class indices."""
     if "eventOrigin" in df.columns:
         return df.groupby("class")["eventOrigin"].first().sort_index().tolist()
     return [str(i) for i in sorted(df["class"].unique())]
@@ -18,12 +18,12 @@ def _resolve_class_names(df: pd.DataFrame) -> list[str]:
 
 def plot_class_balance(
     df: pd.DataFrame,
-    class_names: list[str] | None = None,
+    class_labels: list[str] | None = None,
 ) -> plt.Figure:
     """Plot unweighted and class-weighted event counts per class side by side."""
     class_order = sorted(df["class"].unique())
-    if class_names is None:
-        class_names = _resolve_class_names(df)
+    if class_labels is None:
+        class_labels = _resolve_class_labels(df)
 
     n = len(class_order)
     has_weights = "class_weight" in df.columns
@@ -35,7 +35,7 @@ def plot_class_balance(
     counts = df["class"].value_counts().reindex(class_order)
     axes[0].bar(range(n), counts.values, width=0.5)
     axes[0].set_xticks(range(n))
-    axes[0].set_xticklabels(class_names, fontsize=14)
+    axes[0].set_xticklabels(class_labels, fontsize=14)
     axes[0].set_xlabel("Class")
     axes[0].set_ylabel("Event count")
     axes[0].set_title("Unweighted Countplot")
@@ -46,7 +46,7 @@ def plot_class_balance(
         weighted = df.groupby("class")["class_weight"].sum().reindex(class_order)
         axes[1].bar(range(n), weighted.values, width=0.5)
         axes[1].set_xticks(range(n))
-        axes[1].set_xticklabels(class_names, fontsize=14)
+        axes[1].set_xticklabels(class_labels, fontsize=14)
         axes[1].set_xlabel("Class")
         axes[1].set_ylabel("Event count")
         axes[1].set_title("Weighted Countplot")
@@ -96,14 +96,14 @@ def plot_correlation_matrix(
 def plot_feature_distributions(
     df: pd.DataFrame,
     features: list[str],
-    class_names: list[str] | None = None,
+    class_labels: list[str] | None = None,
     n_cols: int = 3,
     n_bins: int = 50,
 ) -> plt.Figure:
     """Plot per-class normalized histograms for each feature in a grid layout."""
     class_order = sorted(df["class"].unique())
-    if class_names is None:
-        class_names = _resolve_class_names(df)
+    if class_labels is None:
+        class_labels = _resolve_class_labels(df)
 
     colors = [plt.cm.tab10(i % 10) for i in range(len(class_order))]
     n = len(features)
@@ -113,7 +113,7 @@ def plot_feature_distributions(
     axes_flat = np.array(axes).reshape(-1)
 
     for ax, feature in zip(axes_flat, features):
-        for cls, name, color in zip(class_order, class_names, colors):
+        for cls, name, color in zip(class_order, class_labels, colors):
             values = df.loc[df["class"] == cls, feature].dropna()
             ax.hist(
                 values,

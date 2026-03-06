@@ -23,7 +23,7 @@ from src.eda.plots import (  # noqa: E402
     plot_correlation_matrix,
     plot_feature_distributions,
 )
-from src.eda.utils import get_class_names  # noqa: E402
+from src.eda.utils import get_class_labels, get_class_names  # noqa: E402
 from src.processing.analysis import get_output_paths  # noqa: E402
 from src.processing.io import load_dataframe  # noqa: E402
 from src.visualization.plots import save_figure  # noqa: E402
@@ -47,7 +47,8 @@ def main(cfg: DictConfig):
 
     # --- class labels ---
     display_labels = OmegaConf.to_container(cfg.merge.display_labels, resolve=True)
-    class_names = get_class_names(df_mc, display_labels=display_labels)
+    class_names = get_class_names(df_mc)
+    class_labels = get_class_labels(df_mc, display_labels=display_labels)
     log.info("Classes: %s", class_names)
 
     # --- data quality ---
@@ -65,7 +66,7 @@ def main(cfg: DictConfig):
 
     # --- plots ---
     log.info("Generating class balance plot...")
-    fig = plot_class_balance(df_mc, class_names=class_names)
+    fig = plot_class_balance(df_mc, class_labels=class_labels)
     save_figure(fig, plots_dir / "class_balance.png")
 
     log.info("Generating correlation matrix...")
@@ -79,7 +80,7 @@ def main(cfg: DictConfig):
         if c not in _NON_TRAINING_COLS
     ]
     fig = plot_feature_distributions(
-        df_mc, features=training_cols[:12], class_names=class_names
+        df_mc, features=training_cols[:12], class_labels=class_labels
     )
     save_figure(fig, plots_dir / "feature_distributions.png")
 
