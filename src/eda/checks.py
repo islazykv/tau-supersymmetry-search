@@ -10,7 +10,6 @@ def summarize_missing(df: pd.DataFrame) -> pd.DataFrame:
     return result[result["missing"] > 0].sort_values("fraction", ascending=False)
 
 
-
 def summarize_feature_ranges(df: pd.DataFrame) -> pd.DataFrame:
     """Return per-class min, max, mean and std statistics for all numeric features."""
     numeric = df.select_dtypes(include="number")
