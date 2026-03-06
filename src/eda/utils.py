@@ -10,21 +10,25 @@ _DEFAULT_SIGNAL_TYPE_NAMES: dict[str, str] = {
 
 def get_class_names(
     df: pd.DataFrame,
+    display_labels: dict[str, str] | None = None,
     signal_type_names: dict[str, str] | None = None,
 ) -> list[str]:
-    """Derive ordered class display names from eventOrigin prefixes, collapsing mixed-origin signal classes to a type label or 'signal'."""
+    """Derive ordered class display names from eventOrigin, applying display_labels for background groups and prefix matching for merged signal classes."""
     if signal_type_names is None:
         signal_type_names = _DEFAULT_SIGNAL_TYPE_NAMES
+    if display_labels is None:
+        display_labels = {}
 
     class_names: list[str] = []
     for _cls, group in df.groupby("class", sort=True):
         origins = group["eventOrigin"].unique()
 
         if len(origins) == 1:
-            class_names.append(origins[0])
+            origin = origins[0]
+            class_names.append(display_labels.get(origin, origin))
             continue
 
-        # Multiple origins → signal class; resolve from prefixes.
+        # Multiple origins → signal class; resolve from prefixes
         prefixes = {o.split("_")[0] for o in origins}
         matched = {p: n for p, n in signal_type_names.items() if p in prefixes}
 

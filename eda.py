@@ -3,7 +3,7 @@ import logging
 import hydra
 import matplotlib
 import pyrootutils
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 matplotlib.use("Agg")
 
@@ -46,7 +46,8 @@ def main(cfg: DictConfig):
     log.info("Loaded MC: %d rows, %d columns", len(df_mc), len(df_mc.columns))
 
     # --- class labels ---
-    class_names = get_class_names(df_mc)
+    display_labels = OmegaConf.to_container(cfg.merge.display_labels, resolve=True)
+    class_names = get_class_names(df_mc, display_labels=display_labels)
     log.info("Classes: %s", class_names)
 
     # --- data quality ---

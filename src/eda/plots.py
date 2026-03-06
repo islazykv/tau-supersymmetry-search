@@ -109,7 +109,7 @@ def plot_feature_distributions(
     n = len(features)
     n_rows = max(1, (n + n_cols - 1) // n_cols)
 
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, 4 * n_rows))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(10 * n_cols, 8 * n_rows))
     axes_flat = np.array(axes).reshape(-1)
 
     for ax, feature in zip(axes_flat, features):
@@ -126,7 +126,7 @@ def plot_feature_distributions(
             )
         ax.set_xlabel(feature)
         ax.set_ylabel("Density")
-        ax.legend(fontsize=7)
+        ax.legend()
 
     for ax in axes_flat[n:]:
         ax.set_visible(False)
