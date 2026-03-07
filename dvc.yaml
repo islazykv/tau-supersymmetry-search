@@ -18,3 +18,18 @@ stages:
     outs:
       - data/processed/ML/24.2.28/Run2/Preselection/1_tau/models/
       - data/processed/ML/24.2.28/Run2/Preselection/1_tau/dataframes/bdt_predictions.parquet
+
+  evaluate:
+    cmd: uv run python evaluate.py
+    deps:
+      - evaluate.py
+      - src/models/evaluate.py
+      - configs/
+      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
+      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/dataframes/bdt_predictions.parquet
+      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/models/
+    outs:
+      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/plots/bdt_evaluation/
+    metrics:
+      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/metrics/bdt_metrics.json:
+          cache: false
