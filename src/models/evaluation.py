@@ -338,7 +338,8 @@ def plot_permutation_importance(
     from src.models.dnn import predict as dnn_predict
 
     rng = np.random.default_rng(seed)
-    idx = rng.choice(len(X), size=min(n_samples, len(X)), replace=False)
+    n_available = min(len(X), len(y))
+    idx = rng.choice(n_available, size=min(n_samples, n_available), replace=False)
     X_sub = X.iloc[idx].reset_index(drop=True)
     y_sub = y[idx]
 
