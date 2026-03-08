@@ -5,11 +5,13 @@ hidden_sizes: [64, 64, 64]
 activation: "ReLU"
 dropout: 0.2
 
-# ---Learning Task Parameters---
-n_epochs: 10000
+# ---Training Parameters---
+n_epochs: 10
 batch_size: 1024
 
 # ---Optimizer Parameters---
 learning_rate: 0.005
-momentum: 0.9
 weight_decay: 1e-5
+
+# ---Mixed Precision---
+amp: true
