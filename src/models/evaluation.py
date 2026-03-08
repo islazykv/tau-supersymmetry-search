@@ -310,3 +310,143 @@ def plot_score_distributions(
 
     fig.tight_layout()
     return fig
+
+
+# ---------------------------------------------------------------------------
+# DNN-specific evaluation
+# ---------------------------------------------------------------------------
+
+
+def plot_permutation_importance(
+    model,
+    X: pd.DataFrame,
+    y: np.ndarray,
+    scaler,
+    device,
+    feature_names: list[str],
+    n_features: int = 20,
+    n_samples: int = 5000,
+    n_repeats: int = 5,
+    seed: int = 42,
+) -> plt.Figure:
+    """Permutation importance for a DNN model, plotted as a horizontal bar chart.
+
+    Uses a subsample of ``X`` for speed.  The scoring function is accuracy.
+    """
+    from sklearn.inspection import permutation_importance as _perm_importance
+
+    from src.models.dnn import predict as dnn_predict
+
+    rng = np.random.default_rng(seed)
+    idx = rng.choice(len(X), size=min(n_samples, len(X)), replace=False)
+    X_sub = X.iloc[idx].reset_index(drop=True)
+    y_sub = y[idx]
+
+    class _ScoringWrapper:
+        """Wrap DNN predict into a sklearn-compatible estimator for permutation_importance."""
+
+        def __init__(self, model, scaler, device):
+            self._model = model
+            self._scaler = scaler
+            self._device = device
+            self.classes_ = np.arange(model.config["n_classes"])
+
+        def fit(self, X, y):
+            return self
+
+        def predict(self, X):
+            y_pred, _ = dnn_predict(
+                self._model,
+                pd.DataFrame(X, columns=feature_names),
+                self._scaler,
+                self._device,
+            )
+            return y_pred
+
+    wrapper = _ScoringWrapper(model, scaler, device)
+
+    result = _perm_importance(
+        wrapper,
+        X_sub,
+        y_sub,
+        n_repeats=n_repeats,
+        random_state=seed,
+        scoring="accuracy",
+    )
+
+    importances = result.importances_mean
+    top_idx = np.argsort(importances)[-n_features:]
+
+    fig, ax = plt.subplots(figsize=(8, max(4, len(top_idx) * 0.45)))
+    ax.barh(range(len(top_idx)), importances[top_idx])
+    ax.set_yticks(range(len(top_idx)))
+    ax.set_yticklabels([_latex_safe(feature_names[i]) for i in top_idx], fontsize=10)
+    ax.set_xlabel("Mean Accuracy Decrease")
+    ax.set_title("Permutation Importance")
+    ax.grid(True, alpha=0.3, axis="x")
+    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    fig.tight_layout()
+    return fig
+
+
+def compute_dnn_shap_values(
+    model,
+    X: pd.DataFrame,
+    scaler,
+    device,
+    n_samples: int = 2000,
+    n_background: int = 100,
+    seed: int = 42,
+) -> tuple[list[np.ndarray], pd.DataFrame]:
+    """Compute SHAP values for a DNN using GradientExplainer.
+
+    Parameters
+    ----------
+    model : DNNClassifier
+        Trained PyTorch model.
+    X : pd.DataFrame
+        Full feature DataFrame (pre-scaling).
+    scaler : MinMaxScaler
+        Fitted scaler.
+    device : torch.device
+        Model device.
+    n_samples : int
+        Number of events to explain.
+    n_background : int
+        Number of background samples for the explainer.
+    seed : int
+        Random seed.
+
+    Returns
+    -------
+    shap_values : list[np.ndarray]
+        Per-class SHAP values, each of shape ``(n_samples, n_features)``.
+    X_sample : pd.DataFrame
+        The (unscaled) feature subsample used for explanations.
+    """
+    import shap
+    import torch
+
+    rng = np.random.default_rng(seed)
+    idx = rng.choice(len(X), size=min(n_samples, len(X)), replace=False)
+    bg_idx = rng.choice(len(X), size=min(n_background, len(X)), replace=False)
+
+    X_sample = X.iloc[idx].reset_index(drop=True)
+    X_bg = X.iloc[bg_idx]
+
+    X_sample_scaled = torch.tensor(
+        scaler.transform(X_sample.values), dtype=torch.float32, device=device
+    )
+    X_bg_scaled = torch.tensor(
+        scaler.transform(X_bg.values), dtype=torch.float32, device=device
+    )
+
+    model.eval()
+    explainer = shap.GradientExplainer(model, X_bg_scaled)
+    shap_values = explainer.shap_values(X_sample_scaled)
+
+    # shap_values may be a list of arrays (one per class) or a 3D array
+    if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+        shap_values = [shap_values[:, :, i] for i in range(shap_values.shape[2])]
+
+    return shap_values, X_sample
