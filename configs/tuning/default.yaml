@@ -1,0 +1,87 @@
+# Optuna hyperparameter tuning configuration
+# Override via CLI: python tune.py tuning.n_trials=200 tuning.search_space.xgboost.max_depth.high=10
+
+# --- Study settings ---
+n_trials: 100
+sampler: "TPESampler"
+pruner: "MedianPruner"
+direction: "minimize"
+
+# --- Cross-validation ---
+n_splits: 5
+early_stopping_rounds: 50
+
+# --- Persistence (SQLite for resumability) ---
+study_name: "tau-supersymmetry-tuning"
+storage_filename: "optuna_study.db"
+
+# --- Search spaces ---
+# Each parameter: {type: float|int|categorical, low: ..., high: ..., log: true/false}
+# or for categorical: {type: categorical, choices: [...]}
+search_space:
+  xgboost:
+    learning_rate:
+      type: float
+      low: 0.01
+      high: 0.5
+      log: true
+    max_depth:
+      type: int
+      low: 3
+      high: 8
+    min_child_weight:
+      type: int
+      low: 1
+      high: 10
+    gamma:
+      type: float
+      low: 1e-3
+      high: 1.0
+      log: true
+    subsample:
+      type: float
+      low: 0.6
+      high: 1.0
+      log: false
+    colsample_bytree:
+      type: float
+      low: 0.6
+      high: 1.0
+      log: false
+    reg_alpha:
+      type: float
+      low: 1e-4
+      high: 10.0
+      log: true
+    reg_lambda:
+      type: float
+      low: 1e-4
+      high: 10.0
+      log: true
+
+  dnn:
+    n_layers:
+      type: int
+      low: 2
+      high: 5
+    layer_size:
+      type: categorical
+      choices: [32, 64, 128, 256]
+    dropout:
+      type: float
+      low: 0.0
+      high: 0.5
+      log: false
+    learning_rate:
+      type: float
+      low: 1e-4
+      high: 1e-2
+      log: true
+    weight_decay:
+      type: float
+      low: 1e-6
+      high: 1e-3
+      log: true
+    batch_size:
+      type: categorical
+      choices: [256, 512, 1024, 2048]

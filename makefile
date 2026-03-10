@@ -1,4 +1,4 @@
-.PHONY: setup preprocess feature-engineer eda train regions repro pipeline test format lint clean ui dvc-push dvc-pull
+.PHONY: setup preprocess feature-engineer eda train tune regions repro pipeline test format lint clean ui dvc-push dvc-pull
 
 # ---------------------------------------------------------------------------
 # Setup
@@ -23,6 +23,9 @@ eda:
 
 train:
 	uv run python train.py
+
+tune:
+	uv run python tune.py
 
 regions:
 	uv run python regions.py
