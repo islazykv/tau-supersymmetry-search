@@ -11,6 +11,7 @@ defaults:
   - samples@samples.background: background
   - samples@samples.signal: signal
   - samples@samples.data: data
+  - ml_regions: default
   - override hydra/job_logging: default
 
 experiment_name: "tau-supersymmetry-baseline"
