@@ -8,3 +8,4 @@ mlruns/
 .DS_Store
 mlruns.db
 outputs/
+.coverage
