@@ -111,7 +111,7 @@ def build_model(
 def build_scaler(X_train: pd.DataFrame) -> MinMaxScaler:
     """Fit a MinMaxScaler on training features."""
     scaler = MinMaxScaler()
-    scaler.fit(X_train.values)
+    scaler.fit(X_train)
     return scaler
 
 
