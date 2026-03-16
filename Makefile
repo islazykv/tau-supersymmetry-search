@@ -1,6 +1,6 @@
 .PHONY: setup preprocess feature-engineer eda train train-bdt train-dnn tune \
        evaluate evaluate-bdt evaluate-dnn regions pipeline repro \
-       test lint format clean ui dvc-push dvc-pull \
+       test lint typecheck format clean ui dvc-push dvc-pull \
        docker-build docker-run serve serve-dnn
 
 # --------------------------------------------------------------------------- #
@@ -60,6 +60,9 @@ test:
 
 lint:
 	uv run ruff check src/ tests/
+
+typecheck:
+	uv run mypy src/
 
 format:
 	uv run pre-commit run --all-files

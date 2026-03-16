@@ -6,30 +6,94 @@ stages:
       - src/processing/
       - configs/
     outs:
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/samples/
 
-  train:
+  feature_engineer:
+    cmd: uv run python feature_engineer.py
+    deps:
+      - feature_engineer.py
+      - src/processing/
+      - configs/
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/samples/
+    outs:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/data.parquet
+
+  eda:
+    cmd: uv run python eda.py
+    deps:
+      - eda.py
+      - src/eda/
+      - configs/
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
+    outs:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/plots/eda/
+
+  train_bdt:
     cmd: uv run python train_bdt.py
     deps:
       - train_bdt.py
       - src/models/
       - configs/
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
     outs:
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/models/
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/dataframes/bdt_predictions.parquet
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/models/bdt.ubj
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/bdt_predictions.parquet
+    plots:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/plots/bdt/:
+          cache: false
 
-  evaluate:
+  evaluate_bdt:
     cmd: uv run python evaluate_bdt.py
     deps:
       - evaluate_bdt.py
-      - src/models/evaluate.py
+      - src/models/evaluation.py
       - configs/
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/dataframes/bdt_predictions.parquet
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/models/
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/bdt_predictions.parquet
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/models/bdt.ubj
     outs:
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/plots/bdt_evaluation/
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/plots/bdt_evaluation/
     metrics:
-      - data/processed/ML/24.2.28/Run2/Preselection/1_tau/metrics/bdt_metrics.json:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/metrics/bdt_metrics.json:
           cache: false
+
+  train_dnn:
+    cmd: uv run python train_dnn.py model=dnn
+    deps:
+      - train_dnn.py
+      - src/models/
+      - configs/
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
+    outs:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/models/dnn.pt
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/dnn_predictions.parquet
+    plots:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/plots/dnn/:
+          cache: false
+
+  evaluate_dnn:
+    cmd: uv run python evaluate_dnn.py model=dnn
+    deps:
+      - evaluate_dnn.py
+      - src/models/evaluation.py
+      - configs/
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/dnn_predictions.parquet
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/models/dnn.pt
+    outs:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/plots/dnn_evaluation/
+    metrics:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/metrics/dnn_metrics.json:
+          cache: false
+
+  regions:
+    cmd: uv run python regions.py
+    deps:
+      - regions.py
+      - src/regions/
+      - configs/
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/bdt_predictions.parquet
+    outs:
+      - data/processed/ML/25.2.28/Run2/Preselection/1_tau/plots/ml_regions/
