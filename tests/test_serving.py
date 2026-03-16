@@ -10,7 +10,7 @@ import pytest
 import xgboost as xgb
 from fastapi.testclient import TestClient
 
-from src.serving.app import _state, create_app
+from src.serving.app import create_app
 from src.serving.registry import BDTAdapter, DNNAdapter
 
 
@@ -73,10 +73,12 @@ def dnn_path(tmp_path: Path) -> Path:
         {
             "model_config": model.config,
             "state_dict": model.state_dict(),
-            "scaler": scaler,
         },
         str(path),
     )
+    import joblib
+
+    joblib.dump(scaler, str(path.with_suffix(".scaler")))
     return path
 
 
@@ -142,9 +144,6 @@ def bdt_client(bdt_path: Path) -> TestClient:
     )
     with TestClient(app) as client:
         yield client
-    # Reset global state after test
-    _state.adapter = None
-    _state.model_type = ""
 
 
 @pytest.fixture()
@@ -157,13 +156,11 @@ def dnn_client(dnn_path: Path) -> TestClient:
     )
     with TestClient(app) as client:
         yield client
-    _state.adapter = None
-    _state.model_type = ""
 
 
 class TestHealth:
     def test_health_ok(self, bdt_client: TestClient) -> None:
-        resp = bdt_client.get("/health")
+        resp = bdt_client.get("/v1/health")
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "ok"
@@ -172,7 +169,7 @@ class TestHealth:
 
 class TestModelInfo:
     def test_info_bdt(self, bdt_client: TestClient) -> None:
-        resp = bdt_client.get("/model/info")
+        resp = bdt_client.get("/v1/model/info")
         assert resp.status_code == 200
         data = resp.json()
         assert data["model_type"] == "bdt"
@@ -181,7 +178,7 @@ class TestModelInfo:
         assert data["class_names"] == CLASS_NAMES
 
     def test_info_dnn(self, dnn_client: TestClient) -> None:
-        resp = dnn_client.get("/model/info")
+        resp = dnn_client.get("/v1/model/info")
         assert resp.status_code == 200
         data = resp.json()
         assert data["model_type"] == "dnn"
@@ -191,7 +188,7 @@ class TestModelInfo:
 class TestPredict:
     def test_single_prediction(self, bdt_client: TestClient) -> None:
         resp = bdt_client.post(
-            "/predict",
+            "/v1/predict",
             json={"features": {"feat_a": 0.5, "feat_b": -1.0, "feat_c": 0.0}},
         )
         assert resp.status_code == 200
@@ -204,7 +201,7 @@ class TestPredict:
 
     def test_missing_feature(self, bdt_client: TestClient) -> None:
         resp = bdt_client.post(
-            "/predict",
+            "/v1/predict",
             json={"features": {"feat_a": 0.5}},
         )
         assert resp.status_code == 422
@@ -212,7 +209,7 @@ class TestPredict:
 
     def test_extra_features_ignored(self, bdt_client: TestClient) -> None:
         resp = bdt_client.post(
-            "/predict",
+            "/v1/predict",
             json={
                 "features": {
                     "feat_a": 0.5,
@@ -226,7 +223,7 @@ class TestPredict:
 
     def test_dnn_prediction(self, dnn_client: TestClient) -> None:
         resp = dnn_client.post(
-            "/predict",
+            "/v1/predict",
             json={"features": {"feat_a": 0.1, "feat_b": 0.2, "feat_c": 0.3}},
         )
         assert resp.status_code == 200
@@ -240,7 +237,7 @@ class TestBatchPredict:
             {"feat_a": 0.5, "feat_b": -1.0, "feat_c": 0.0},
             {"feat_a": -0.3, "feat_b": 2.0, "feat_c": 1.0},
         ]
-        resp = bdt_client.post("/predict/batch", json={"samples": samples})
+        resp = bdt_client.post("/v1/predict/batch", json={"samples": samples})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data["predictions"]) == 2
@@ -252,5 +249,5 @@ class TestBatchPredict:
             {"feat_a": 0.5, "feat_b": -1.0, "feat_c": 0.0},
             {"feat_a": 0.5},  # missing feat_b, feat_c
         ]
-        resp = bdt_client.post("/predict/batch", json={"samples": samples})
+        resp = bdt_client.post("/v1/predict/batch", json={"samples": samples})
         assert resp.status_code == 422
