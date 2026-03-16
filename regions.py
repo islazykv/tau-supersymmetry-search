@@ -85,6 +85,8 @@ def main(cfg: DictConfig) -> None:
         )
         test_indices = X_test.index
     elif split_strategy == "k_fold":
+        # K-fold predictions are out-of-fold: each event's prediction comes from
+        # a model that never saw it during training, so the full index is valid.
         test_indices = X.index
     else:
         raise ValueError(f"Unknown split_strategy: {split_strategy!r}")

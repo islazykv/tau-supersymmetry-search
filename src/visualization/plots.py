@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import warnings
@@ -7,6 +8,8 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import atlas_mpl_style as ampl
 import matplotlib.pyplot as plt
+
+log = logging.getLogger(__name__)
 
 
 def apply_atlas_style():
@@ -22,16 +25,14 @@ def apply_atlas_style():
         if latex_exists:
             plt.rc("text", usetex=True)
             ampl.use_atlas_style(usetex=True)
-            print("ATLAS style applied with LaTeX.")
+            log.info("ATLAS style applied with LaTeX.")
         else:
             plt.rc("text", usetex=False)
             ampl.use_atlas_style(usetex=False)
-            print(
-                "Notice: LaTeX not found on this system. Applying ATLAS style without LaTeX."
-            )
+            log.info("LaTeX not found — applying ATLAS style without LaTeX.")
 
     except Exception as e:
-        print(f"Notice: ATLAS style fallback (Error: {e})")
+        log.warning("ATLAS style fallback (Error: %s)", e)
         plt.rc("text", usetex=False)
 
 

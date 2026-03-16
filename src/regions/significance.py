@@ -76,6 +76,7 @@ def compute_significance_grid(
         data = bkg + model.config.auxdata
 
         try:
+            # pyhf prints verbose optimizer diagnostics to stderr; suppress them.
             _stderr = sys.stderr
             sys.stderr = open("/dev/null", "w")  # noqa: SIM115
             _, cls_exp = pyhf.infer.hypotest(
@@ -84,6 +85,7 @@ def compute_significance_grid(
             sys.stderr.close()
             sys.stderr = _stderr
         except Exception:
+            log.debug("pyhf hypotest failed for %s — defaulting to CLs=0.0", mass_point)
             cls_exp = 0.0
 
         prefix = mass_point.split("_")[0]

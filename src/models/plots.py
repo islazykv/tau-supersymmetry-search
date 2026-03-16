@@ -59,7 +59,7 @@ def plot_kfold_training_curves(
 
     fig, ax = plt.subplots(figsize=(9, 5))
 
-    palette = plt.cm.tab10.colors  # type: ignore[attr-defined]
+    palette = plt.cm.tab10.colors
     for fold_idx, model in enumerate(models):
         val_loss = model.evals_result()["validation_1"][metric]
         best_iter = int(val_loss.index(min(val_loss)))
@@ -138,7 +138,7 @@ def plot_dnn_kfold_training_curves(
 
     fig, ax = plt.subplots(figsize=(9, 5))
 
-    palette = plt.cm.tab10.colors  # type: ignore[attr-defined]
+    palette = plt.cm.tab10.colors
     for fold_idx, hist in enumerate(fold_histories):
         val_loss = hist["val_loss"]
         best_epoch = hist["best_epoch"]
