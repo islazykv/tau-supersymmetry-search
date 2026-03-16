@@ -26,6 +26,7 @@ from src.processing.merger import (  # noqa: E402
     split_mc_data,
 )
 from src.processing.rectangularizer import fill_padding, rectangularize_pad_array  # noqa: E402
+from src.processing.validation import validate_mc  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -107,6 +108,9 @@ def main(cfg: DictConfig):
     # --- class weights ---
     weights = assign_class_weights(df_mc)
     log.info("Class weights: %s", weights.to_dict())
+
+    # --- validate ---
+    df_mc = validate_mc(df_mc)
 
     # --- save ---
     dataframes_dir = output_paths["dataframes_dir"]
