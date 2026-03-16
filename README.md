@@ -105,14 +105,14 @@ uv run python serve.py --model-type dnn --model-path models/dnn.pt --class-names
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/model/info` | GET | Model metadata (features, classes) |
-| `/predict` | POST | Single-sample prediction |
-| `/predict/batch` | POST | Batch prediction |
+| `/v1/health` | GET | Health check |
+| `/v1/model/info` | GET | Model metadata (features, classes) |
+| `/v1/predict` | POST | Single-sample prediction |
+| `/v1/predict/batch` | POST | Batch prediction |
 
 ```bash
 # Example query
-curl -X POST http://localhost:8000/predict \
+curl -X POST http://localhost:8000/v1/predict \
   -H "Content-Type: application/json" \
   -d '{"features": {"met": 250.0, "jet_n": 3}}'
 
@@ -204,6 +204,24 @@ Step-by-step analysis walkthrough:
 | 06a | `bdt_evaluation` | BDT performance, SHAP, ROC |
 | 06b | `dnn_evaluation` | DNN performance analysis |
 | 07 | `regions` | ML-based region optimisation |
+
+## Data & Reproducibility
+
+This project uses a split tracking strategy:
+
+| Concern | Tool | What it tracks |
+|---------|------|----------------|
+| **Pipeline DAG** | DVC | Stage dependencies, cached intermediate outputs (`dvc repro`) |
+| **Processed data** | DVC | Parquet dataframes derived from preprocessing and feature engineering |
+| **Experiments** | MLflow | Hyperparameters, metrics, model artifacts, plots |
+
+**Raw data:** The input ROOT ntuples (~1 TB) are produced by the ATLAS experiment. They are not version-controlled — preprocessing reads them as fixed, read-only inputs.
+
+To reproduce the pipeline from existing processed data:
+
+```bash
+make repro                       # Re-run only stages whose deps changed
+```
 
 ## Development
 
