@@ -10,3 +10,8 @@ mlruns.db
 __pycache__/
 .ruff_cache/
 .pytest_cache/
+.dvc/
+.claude/
+outputs/
+tests/
+*.egg-info/
