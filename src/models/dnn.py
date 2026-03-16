@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 import torch
@@ -230,7 +231,7 @@ def train(
         running_loss = 0.0
         for idx in _batch_indices(n_train, batch_size, shuffle=True, generator=gen):
             optimizer.zero_grad()
-            with autocast(enabled=use_amp):
+            with autocast(device_type=device.type, enabled=use_amp):
                 logits = model(X_tr[idx])
                 loss = criterion(logits, y_tr[idx])
             grad_scaler.scale(loss).backward()
@@ -243,7 +244,7 @@ def train(
 
         # --- validation (single pass if it fits, else batched) ---
         model.eval()
-        with torch.no_grad(), autocast(enabled=use_amp):
+        with torch.no_grad(), autocast(device_type=device.type, enabled=use_amp):
             val_logits = model(X_va)
             epoch_val_loss = criterion(val_logits, y_va).item()
 
@@ -445,23 +446,26 @@ def save_model(model: DNNClassifier, scaler: MinMaxScaler, path: Path) -> None:
         {
             "model_config": model.config,
             "state_dict": model.state_dict(),
-            "scaler": scaler,
         },
         str(path),
     )
-    log.info("Model + scaler saved to %s", path)
+    scaler_path = path.with_suffix(".scaler")
+    joblib.dump(scaler, scaler_path)
+    log.info("Model saved to %s, scaler to %s", path, scaler_path)
 
 
 def load_model(
     path: Path,
     device: torch.device = torch.device("cpu"),
 ) -> tuple[DNNClassifier, MinMaxScaler]:
-    """Load model and scaler from a ``.pt`` checkpoint."""
-    checkpoint = torch.load(str(Path(path)), map_location=device, weights_only=False)
+    """Load model and scaler from a ``.pt`` checkpoint and companion ``.scaler`` file."""
+    path = Path(path)
+    checkpoint = torch.load(str(path), map_location=device, weights_only=True)
     model = DNNClassifier(**checkpoint["model_config"])
     model.load_state_dict(checkpoint["state_dict"])
     model.to(device)
     model.eval()
-    scaler: MinMaxScaler = checkpoint["scaler"]
-    log.info("Model + scaler loaded from %s", path)
+    scaler_path = path.with_suffix(".scaler")
+    scaler: MinMaxScaler = joblib.load(scaler_path)
+    log.info("Model loaded from %s, scaler from %s", path, scaler_path)
     return model, scaler

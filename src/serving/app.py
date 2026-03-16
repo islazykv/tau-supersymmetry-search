@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 
 from src.serving.registry import ModelAdapter, load_adapter
 from src.serving.schemas import (
@@ -20,15 +19,6 @@ from src.serving.schemas import (
     PredictRequest,
     PredictResponse,
 )
-
-
-@dataclass
-class _State:
-    adapter: ModelAdapter | None = None
-    model_type: str = ""
-
-
-_state = _State()
 
 
 def _validate_features(
@@ -48,8 +38,9 @@ def _validate_features(
     return {k: features[k] for k in expected}
 
 
-def _predict_single(features: dict[str, float]) -> PredictResponse:
-    adapter = _state.adapter
+def _predict_single(
+    adapter: ModelAdapter, features: dict[str, float]
+) -> PredictResponse:
     expected = adapter.feature_names()
     validated = _validate_features(features, expected)
     df = pd.DataFrame([validated])
@@ -63,58 +54,43 @@ def _predict_single(features: dict[str, float]) -> PredictResponse:
     )
 
 
-def create_app(
-    model_type: str = "",
-    model_path: str = "",
-    class_names: list[str] | None = None,
-) -> FastAPI:
-    """Create a FastAPI app with lifespan-managed model loading."""
+def _get_adapter(request: Request) -> ModelAdapter:
+    """Retrieve the model adapter from app state, or raise 503."""
+    adapter: ModelAdapter | None = getattr(request.app.state, "adapter", None)
+    if adapter is None:
+        raise HTTPException(status_code=503, detail="No model loaded")
+    return adapter
 
-    @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-        # Load model on startup
-        if model_type and model_path:
-            _state.adapter = load_adapter(
-                model_type, Path(model_path), class_names=class_names
-            )
-            _state.model_type = model_type
-        yield
-        # Cleanup
-        _state.adapter = None
 
-    app = FastAPI(
-        title="tau-supersymmetry inference API",
-        version="0.1.0",
-        lifespan=lifespan,
-    )
+def _build_router() -> APIRouter:
+    """Build the versioned API router."""
+    router = APIRouter(prefix="/v1")
 
-    @app.get("/health", response_model=HealthResponse)
-    async def health() -> HealthResponse:
-        return HealthResponse(model_loaded=_state.adapter is not None)
+    @router.get("/health", response_model=HealthResponse)
+    async def health(request: Request) -> HealthResponse:
+        adapter = getattr(request.app.state, "adapter", None)
+        return HealthResponse(model_loaded=adapter is not None)
 
-    @app.get("/model/info", response_model=ModelInfoResponse)
-    async def model_info() -> ModelInfoResponse:
-        if _state.adapter is None:
-            raise HTTPException(status_code=503, detail="No model loaded")
-        adapter = _state.adapter
+    @router.get("/model/info", response_model=ModelInfoResponse)
+    async def model_info(request: Request) -> ModelInfoResponse:
+        adapter = _get_adapter(request)
         return ModelInfoResponse(
-            model_type=_state.model_type,
+            model_type=request.app.state.model_type,
             features=adapter.feature_names(),
             n_classes=adapter.n_classes(),
             class_names=adapter.class_names(),
         )
 
-    @app.post("/predict", response_model=PredictResponse)
-    async def predict(req: PredictRequest) -> PredictResponse:
-        if _state.adapter is None:
-            raise HTTPException(status_code=503, detail="No model loaded")
-        return _predict_single(req.features)
+    @router.post("/predict", response_model=PredictResponse)
+    async def predict(req: PredictRequest, request: Request) -> PredictResponse:
+        adapter = _get_adapter(request)
+        return _predict_single(adapter, req.features)
 
-    @app.post("/predict/batch", response_model=BatchPredictResponse)
-    async def predict_batch(req: BatchPredictRequest) -> BatchPredictResponse:
-        if _state.adapter is None:
-            raise HTTPException(status_code=503, detail="No model loaded")
-        adapter = _state.adapter
+    @router.post("/predict/batch", response_model=BatchPredictResponse)
+    async def predict_batch(
+        req: BatchPredictRequest, request: Request
+    ) -> BatchPredictResponse:
+        adapter = _get_adapter(request)
         expected = adapter.feature_names()
         # Validate all samples
         validated = [_validate_features(s, expected) for s in req.samples]
@@ -134,5 +110,37 @@ def create_app(
                 )
             )
         return BatchPredictResponse(predictions=predictions)
+
+    return router
+
+
+def create_app(
+    model_type: str = "",
+    model_path: str = "",
+    class_names: list[str] | None = None,
+) -> FastAPI:
+    """Create a FastAPI app with lifespan-managed model loading."""
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+        # Load model on startup
+        if model_type and model_path:
+            app.state.adapter = load_adapter(
+                model_type, Path(model_path), class_names=class_names
+            )
+            app.state.model_type = model_type
+        else:
+            app.state.adapter = None
+            app.state.model_type = ""
+        yield
+        # Cleanup
+        app.state.adapter = None
+
+    app = FastAPI(
+        title="tau-supersymmetry inference API",
+        version="0.1.0",
+        lifespan=lifespan,
+    )
+    app.include_router(_build_router())
 
     return app

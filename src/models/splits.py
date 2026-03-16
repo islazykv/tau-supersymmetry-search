@@ -5,10 +5,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split as _sklearn_split
 
-# Columns present in mc.parquet that are NOT input features for ML training
-_NON_TRAINING_COLS: frozenset[str] = frozenset(
-    {"class", "class_weight", "weight", "tau_n", "eventOrigin"}
-)
+from src.processing.validation import METADATA_COLUMNS
 
 
 def prepare_features_target(
@@ -25,7 +22,7 @@ def prepare_features_target(
     weights : pd.Series
         Per-event class weights for imbalance correction.
     """
-    training_cols = [c for c in df.columns if c not in _NON_TRAINING_COLS]
+    training_cols = [c for c in df.columns if c not in METADATA_COLUMNS]
     X = df[training_cols].copy()
     y = df["class"].copy()
     weights = df["class_weight"].copy()

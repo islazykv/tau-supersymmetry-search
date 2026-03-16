@@ -26,11 +26,10 @@ from src.eda.plots import (  # noqa: E402
 from src.eda.utils import get_class_labels, get_class_names  # noqa: E402
 from src.processing.analysis import get_output_paths  # noqa: E402
 from src.processing.io import load_dataframe  # noqa: E402
+from src.processing.validation import METADATA_COLUMNS  # noqa: E402
 from src.visualization.plots import save_figure  # noqa: E402
 
 log = logging.getLogger(__name__)
-
-_NON_TRAINING_COLS = {"class", "class_weight", "tau_n", "eventOrigin"}
 
 
 @hydra.main(version_base="1.3", config_path="configs", config_name="config")
@@ -77,7 +76,7 @@ def main(cfg: DictConfig):
     training_cols = [
         c
         for c in df_mc.select_dtypes(include="number").columns
-        if c not in _NON_TRAINING_COLS
+        if c not in METADATA_COLUMNS
     ]
     fig = plot_feature_distributions(
         df_mc, features=training_cols[:12], class_labels=class_labels

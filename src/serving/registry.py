@@ -39,7 +39,8 @@ class BDTAdapter(ModelAdapter):
         self._class_names = class_names
 
     def feature_names(self) -> list[str]:
-        return list(self._model.get_booster().feature_names)
+        names = self._model.get_booster().feature_names
+        return list(names) if names is not None else []
 
     def n_classes(self) -> int:
         # XGBoost n_classes_ attribute
@@ -82,7 +83,7 @@ class DNNAdapter(ModelAdapter):
         return [f"feature_{i}" for i in range(n)]
 
     def n_classes(self) -> int:
-        return self._model.config["n_classes"]
+        return int(self._model.config["n_classes"])
 
     def class_names(self) -> list[str]:
         if self._class_names:
@@ -118,4 +119,4 @@ def load_adapter(
         raise ValueError(
             f"Unknown model type {model_type!r}. Choose from: {list(ADAPTERS)}"
         )
-    return cls(Path(model_path), class_names=class_names)
+    return cls(Path(model_path), class_names=class_names)  # type: ignore[call-arg]
