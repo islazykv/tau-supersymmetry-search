@@ -50,15 +50,17 @@ graph LR
 | Category | Tools |
 |----------|-------|
 | **Models** | XGBoost, PyTorch |
-| **Tuning** | Optuna (TPE sampler, median pruning, SQLite persistence) |
-| **Config** | Hydra (hierarchical YAML, CLI overrides) |
-| **Tracking** | MLflow (params, metrics, artifacts) |
-| **Pipeline** | DVC (stage DAG, cached outputs) |
+| **Tuning** | Optuna |
+| **Evaluation** | scikit-learn, SHAP, pyhf |
+| **Tracking** | MLflow |
+| **Config** | Hydra |
+| **Data** | uproot, awkward-array, pandas, Pandera |
+| **Pipeline** | DVC |
 | **Serving** | FastAPI, uvicorn |
 | **Testing** | pytest, pytest-cov |
-| **Linting** | Ruff, pre-commit hooks |
+| **Linting** | mypy, Ruff, pre-commit hooks |
 | **CI/CD** | GitHub Actions |
-| **Deps** | uv (locked with `uv.lock`) |
+| **Deps** | uv |
 | **Container** | Docker |
 
 ## Quick Start
