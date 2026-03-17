@@ -137,7 +137,7 @@ def create_app(
         app.state.adapter = None
 
     app = FastAPI(
-        title="tau-supersymmetry inference API",
+        title="tau-supersymmetry-search inference API",
         version="0.1.0",
         lifespan=lifespan,
     )

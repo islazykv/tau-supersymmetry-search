@@ -15,5 +15,5 @@ defaults:
   - tuning: default
   - override hydra/job_logging: default
 
-experiment_name: "tau-supersymmetry-baseline"
+experiment_name: "tau-supersymmetry-search-baseline"
 seed: 1

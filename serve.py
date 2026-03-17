@@ -15,7 +15,7 @@ import uvicorn
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Start the tau-supersymmetry inference API."
+        description="Start the tau-supersymmetry-search inference API."
     )
     parser.add_argument(
         "--model-type",

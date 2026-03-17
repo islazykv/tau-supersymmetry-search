@@ -1,5 +1,5 @@
 [project]
-name = "tau-supersymmetry"
+name = "tau-supersymmetry-search"
 version = "0.1.0"
 description = "Supersymmetry search with tau leptons in ATLAS data using ML for signal-background classification"
 readme = "README.md"

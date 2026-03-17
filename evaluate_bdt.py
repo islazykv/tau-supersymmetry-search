@@ -53,7 +53,7 @@ def main(cfg: DictConfig) -> None:
     # --- mlflow: resume latest training run ---
     tracking_uri = f"file://{root}/mlruns"
     mlflow.set_tracking_uri(tracking_uri)
-    experiment_name = cfg.get("experiment_name", "tau-supersymmetry-baseline")
+    experiment_name = cfg.get("experiment_name", "tau-supersymmetry-search-baseline")
     client = mlflow.tracking.MlflowClient(tracking_uri=tracking_uri)
     experiment = client.get_experiment_by_name(experiment_name)
     latest_runs = client.search_runs(
