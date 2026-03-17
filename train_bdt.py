@@ -47,7 +47,7 @@ def main(cfg: DictConfig) -> None:
     log.info("Starting BDT training:\n%s", OmegaConf.to_yaml(cfg))
 
     mlflow.set_tracking_uri(f"file://{root}/mlruns")
-    mlflow.set_experiment(cfg.get("experiment_name", "tau-supersymmetry-bdt"))
+    mlflow.set_experiment(cfg.get("experiment_name", "tau-supersymmetry-search-bdt"))
 
     with mlflow.start_run():
         try:

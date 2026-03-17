@@ -32,10 +32,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/health')" || exit 1
 
 # Any script can be passed as an argument:
-#   docker run tau-supersymmetry train_bdt.py
-#   docker run tau-supersymmetry train_dnn.py
-#   docker run tau-supersymmetry preprocess.py
-#   docker run tau-supersymmetry tune.py model=dnn tuning.n_trials=100
-#   docker run -p 8000:8000 tau-supersymmetry serve.py --model-type bdt --model-path models/bdt.ubj
+#   docker run tau-supersymmetry-search train_bdt.py
+#   docker run tau-supersymmetry-search train_dnn.py
+#   docker run tau-supersymmetry-search preprocess.py
+#   docker run tau-supersymmetry-search tune.py model=dnn tuning.n_trials=100
+#   docker run -p 8000:8000 tau-supersymmetry-search serve.py --model-type bdt --model-path models/bdt.ubj
 ENTRYPOINT ["python"]
 CMD ["train_bdt.py"]

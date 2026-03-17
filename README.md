@@ -69,8 +69,8 @@ graph LR
 
 ```bash
 # Clone and install
-git clone https://github.com/<your-username>/tau-supersymmetry.git
-cd tau-supersymmetry
+git clone https://github.com/<your-username>/tau-supersymmetry-search.git
+cd tau-supersymmetry-search
 make setup
 ```
 

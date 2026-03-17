@@ -40,7 +40,7 @@ def main(cfg: DictConfig) -> None:
     log.info("Starting hyperparameter tuning:\n%s", OmegaConf.to_yaml(cfg))
 
     mlflow.set_tracking_uri(f"file://{root}/mlruns")
-    mlflow.set_experiment(cfg.get("experiment_name", "tau-supersymmetry-tuning"))
+    mlflow.set_experiment(cfg.get("experiment_name", "tau-supersymmetry-search-tuning"))
 
     with mlflow.start_run(run_name=f"tuning-{cfg.model.name}"):
         mlflow.log_params(

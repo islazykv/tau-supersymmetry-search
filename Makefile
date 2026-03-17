@@ -99,10 +99,10 @@ clean:
 # --------------------------------------------------------------------------- #
 
 docker-build:
-	docker build -t tau-supersymmetry .
+	docker build -t tau-supersymmetry-search .
 
 docker-run:
-	docker run --rm tau-supersymmetry
+	docker run --rm tau-supersymmetry-search
 
 # --------------------------------------------------------------------------- #
 # Serving
