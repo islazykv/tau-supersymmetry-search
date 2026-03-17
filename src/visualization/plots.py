@@ -37,7 +37,12 @@ def apply_atlas_style():
 
 
 def save_figure(fig: plt.Figure, path: Path, dpi: int = 150) -> None:
-    """Save a matplotlib figure to disk, creating parent directories as needed."""
+    """Save a matplotlib figure as PNG and PDF, creating parent directories as needed."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, dpi=dpi, bbox_inches="tight")
+    fig.savefig(path, dpi=dpi, bbox_inches="tight", facecolor="white")
+    fig.savefig(
+        path.with_suffix(".pdf"),
+        bbox_inches="tight",
+        facecolor="white",
+    )

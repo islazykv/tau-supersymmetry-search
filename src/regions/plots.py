@@ -36,29 +36,7 @@ def plot_signal_score(
     bins: int = 50,
     score_column: str = "p_signal",
 ) -> plt.Figure:
-    """Stacked histogram of signal output score with optional region threshold lines.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Analysis DataFrame containing *score_column*, ``y_true``, and ``weight``.
-    class_labels : list[str]
-        Display labels for each class (ordered by class index).
-    thresholds : tuple, optional
-        ``(CR, VR, SR)`` threshold values to draw vertical lines and coloured spans.
-    mode : ``"binary"`` or ``"multiclass"``.
-    weighted : bool
-        If True, use event weights.
-    scale : ``"linear"`` or ``"log"``.
-    bins : int
-        Number of histogram bins.
-    score_column : str
-        Column name for the signal probability score.
-
-    Returns
-    -------
-    plt.Figure
-    """
+    """Stacked histogram of the signal output score with region threshold overlays."""
     scores = df[score_column].to_numpy()
     y_true = df["y_true"].to_numpy()
     weights = df["weight"].to_numpy()
@@ -167,20 +145,7 @@ def plot_significance_grid(
     grids: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]],
     run_label: str = "Run2",
 ) -> plt.Figure:
-    """Side-by-side heatmaps of CLs significance for each signal production type.
-
-    Parameters
-    ----------
-    grids : dict
-        Mapping signal type label (e.g. ``"GG"``, ``"SS"``) to
-        ``(grid_array, x_ticks, y_ticks)``.
-    run_label : str
-        Run identifier for the luminosity text.
-
-    Returns
-    -------
-    plt.Figure
-    """
+    """Side-by-side heatmaps of CLs significance for each signal production type."""
     _TITLES: dict[str, str] = {
         "GG": (
             r"$\tilde{g}\tilde{g}$ production, "
@@ -266,108 +231,49 @@ def _build_caption(
     return upper + middle + lower
 
 
-def plot_kinematic_distribution(
+def _draw_kinematic_ax(
+    ax_main: plt.Axes,
     feature: str,
-    n_bins: int,
-    xlim: tuple[float, float],
-    xlabel: str,
-    ylabel: str,
-    region: str,
-    backgrounds: dict[str, pd.DataFrame],
+    bin_edges: np.ndarray,
+    bkg_arrays: list[np.ndarray],
+    bkg_weights: list[np.ndarray],
+    bkg_labels: list[str],
+    color_bkg: list,
     *,
-    signals: dict[str, pd.DataFrame] | None = None,
-    background_labels: list[str] | None = None,
-    signal_labels: list[str] | None = None,
+    sig_arrays: list[np.ndarray] | None = None,
+    sig_weights: list[np.ndarray] | None = None,
+    sig_labels: list[str] | None = None,
+    color_sig: list | None = None,
     data: pd.DataFrame | None = None,
     data_label: str = "Data",
+    scale: str = "linear",
+    xlabel: str = "",
+    ylabel: str = "Events",
+    xlim: tuple[float, float] | None = None,
+    ax_ratio: plt.Axes | None = None,
     run: str = "Run2",
+    region: str = "",
     channel: str | None = None,
     subject: str | None = None,
-    scale: str = "linear",
-    scale_factor: float = 1.0,
-) -> plt.Figure:
-    """Kinematic distribution with stacked backgrounds, signal overlays, and data/MC ratio.
-
-    Plots a single feature. The caller should loop over features and call this once
-    per feature.
-
-    Parameters
-    ----------
-    feature : str
-        Column name in the DataFrames to plot.
-    n_bins : int
-        Number of histogram bins.
-    xlim : tuple[float, float]
-        X-axis range ``(low, high)``.
-    xlabel, ylabel : str
-        Axis labels (may contain LaTeX).
-    region : str
-        Region name for the caption (``"CR"``, ``"VR"``, ``"SR"``).
-    backgrounds : dict[str, pd.DataFrame]
-        Mapping background label -> DataFrame (must contain *feature* and ``weight``).
-    signals : dict, optional
-        Mapping signal label -> DataFrame.
-    background_labels : list[str], optional
-        Display labels for the legend (defaults to dict keys).
-    signal_labels : list[str], optional
-        Display labels for signal legend (defaults to dict keys).
-    data : pd.DataFrame, optional
-        Data DataFrame (triggers the ratio panel).
-    data_label : str
-        Legend label for data points.
-    run : str
-        ``"Run2"`` or ``"Run3"`` for caption text.
-    channel, subject : str, optional
-        Additional caption text.
-    scale : str
-        ``"linear"`` or ``"log"``.
-    scale_factor : float
-        Multiplicative scale factor applied to MC background weights.
-
-    Returns
-    -------
-    plt.Figure
-    """
-    include_data = data is not None
-    bin_edges = np.linspace(xlim[0], xlim[1], n_bins + 1)
+) -> None:
+    """Draw a single kinematic distribution panel on the given axes."""
     bins_center = bin_edges[:-1] + 0.5 * np.diff(bin_edges)
+    include_data = data is not None
 
-    bkg_keys = list(backgrounds.keys())
-    bkg_labels = background_labels if background_labels is not None else bkg_keys
-    n_bkg = len(bkg_keys)
-    color_bkg = list(sns.color_palette("Set3", n_colors=n_bkg))
-
-    # ---- figure layout ----
-    if include_data:
-        fig, (ax_main, ax_ratio) = plt.subplots(
-            2,
-            1,
-            gridspec_kw={"height_ratios": [3, 1]},
-            figsize=(8, 6),
-        )
-        ax_main.set_xlim(xlim)
+    ax_main.set_xlim(xlim)
+    if ax_ratio is not None:
         ax_ratio.set_xlim(xlim)
-    else:
-        fig, ax_main = plt.subplots(1, 1, figsize=(8, 6))
-        ax_main.set_xlim(xlim)
-
-    # ---- extract arrays ----
-    bkg_arrays = [backgrounds[k][feature].to_numpy() for k in bkg_keys]
-    bkg_weights = [backgrounds[k]["weight"].to_numpy() * scale_factor for k in bkg_keys]
 
     # ---- signals (step histograms) ----
-    if signals:
-        sig_keys = list(signals.keys())
-        sig_labels_final = signal_labels if signal_labels is not None else sig_keys
-        color_sig = list(sns.color_palette("rocket", n_colors=len(sig_keys)))
-        sig_arrays = [signals[k][feature].to_numpy() for k in sig_keys]
-        sig_weights = [signals[k]["weight"].to_numpy() for k in sig_keys]
+    n_sig = 0
+    if sig_arrays is not None and len(sig_arrays) > 0:
+        n_sig = len(sig_arrays)
         ax_main.hist(
             sig_arrays,
             weights=sig_weights,
             bins=bin_edges,
             histtype="step",
-            label=sig_labels_final[::-1],
+            label=sig_labels[::-1],
             color=color_sig,
             linestyle="dashed",
             linewidth=2,
@@ -398,12 +304,11 @@ def plot_kinematic_distribution(
     )
 
     # ---- data points ----
+    n_data_safe = None
     if include_data:
         data_vals = data[feature].to_numpy()
         data_w = data["weight"].to_numpy()
         n_data, _ = np.histogram(data_vals, weights=data_w, bins=bin_edges)
-
-        # suppress 0/0 warnings
         n_data_safe = np.where(n_data == 0, np.nan, n_data)
         ax_main.scatter(
             bins_center,
@@ -416,12 +321,10 @@ def plot_kinematic_distribution(
         )
 
     # ---- ratio panel ----
-    if include_data:
+    if include_data and ax_ratio is not None:
         with np.errstate(divide="ignore", invalid="ignore"):
             ratio = n_data_safe / n_bkg_merged
             ratio_err = np.sqrt(n_data_safe) / n_data_safe
-
-        # line = ax_ratio.axhline(y=1, color="red", linewidth=2)
         ax_ratio.scatter(bins_center, ratio, marker="o", c="black", s=40, zorder=2)
         ax_ratio.errorbar(bins_center, ratio, yerr=ratio_err, fmt=".", c="black")
         ax_ratio.set_ylim([0.7, 1.3])
@@ -429,7 +332,6 @@ def plot_kinematic_distribution(
         ax_ratio.set_xlabel(xlabel, loc="right", fontsize=12)
         ax_ratio.locator_params(nbins=10, axis="x")
         ax_ratio.tick_params(axis="both", labelsize=12)
-        fig.align_ylabels([ax_main, ax_ratio])
         ax_main.set_xticklabels([])
     else:
         ax_main.set_xlabel(xlabel, loc="right", fontsize=12)
@@ -454,8 +356,6 @@ def plot_kinematic_distribution(
     # ---- legend ----
     handles, labels = ax_main.get_legend_handles_labels()
 
-    # Split signal handles (first) from background handles (after)
-    n_sig = len(signals) if signals else 0
     sig_handles = handles[:n_sig]
     sig_legend_labels = labels[:n_sig]
     bkg_handles = handles[n_sig:]
@@ -491,9 +391,105 @@ def plot_kinematic_distribution(
     )
 
     # ---- ATLAS label & caption ----
-    ampl.draw_atlas_label(0.02, 0.97, status="int")
+    ampl.draw_atlas_label(0.02, 0.97, status="int", ax=ax_main)
     caption = _build_caption(run, region, channel, subject)
     ax_main.text(0.33, 0.85, caption, fontsize=12, transform=ax_main.transAxes)
 
-    plt.subplots_adjust(hspace=0.1)
+
+def plot_kinematic_distribution(
+    feature: str,
+    n_bins: int,
+    xlim: tuple[float, float],
+    xlabel: str,
+    ylabel: str,
+    region: str,
+    backgrounds: dict[str, pd.DataFrame],
+    *,
+    signals: dict[str, pd.DataFrame] | None = None,
+    background_labels: list[str] | None = None,
+    signal_labels: list[str] | None = None,
+    data: pd.DataFrame | None = None,
+    data_label: str = "Data",
+    run: str = "Run2",
+    channel: str | None = None,
+    subject: str | None = None,
+    scale: str = "linear",
+    scale_factor: float = 1.0,
+) -> plt.Figure:
+    """Stacked background + signal overlay kinematic distribution (supports dual linear/log panels)."""
+    include_data = data is not None
+    bin_edges = np.linspace(xlim[0], xlim[1], n_bins + 1)
+
+    bkg_keys = list(backgrounds.keys())
+    bkg_labels_final = background_labels if background_labels is not None else bkg_keys
+    n_bkg = len(bkg_keys)
+    color_bkg = list(sns.color_palette("Set3", n_colors=n_bkg))
+
+    # ---- extract arrays ----
+    bkg_arrays = [backgrounds[k][feature].to_numpy() for k in bkg_keys]
+    bkg_weights = [backgrounds[k]["weight"].to_numpy() * scale_factor for k in bkg_keys]
+
+    sig_arrays = sig_weights = sig_labels_final = color_sig = None
+    if signals:
+        sig_keys = list(signals.keys())
+        sig_labels_final = signal_labels if signal_labels is not None else sig_keys
+        color_sig = list(sns.color_palette("rocket", n_colors=len(sig_keys)))
+        sig_arrays = [signals[k][feature].to_numpy() for k in sig_keys]
+        sig_weights = [signals[k]["weight"].to_numpy() for k in sig_keys]
+
+    dual = scale == "dual"
+    scales = ["linear", "log"] if dual else [scale]
+    n_cols = len(scales)
+
+    # ---- figure layout ----
+    if include_data:
+        fig, axes = plt.subplots(
+            2,
+            n_cols,
+            gridspec_kw={"height_ratios": [3, 1]},
+            figsize=(8 * n_cols, 6),
+            squeeze=False,
+        )
+    else:
+        fig, axes = plt.subplots(
+            1,
+            n_cols,
+            figsize=(8 * n_cols, 6),
+            squeeze=False,
+        )
+
+    for col_idx, s in enumerate(scales):
+        ax_main = axes[0, col_idx]
+        ax_ratio = axes[1, col_idx] if include_data else None
+
+        _draw_kinematic_ax(
+            ax_main,
+            feature,
+            bin_edges,
+            bkg_arrays,
+            bkg_weights,
+            bkg_labels_final,
+            color_bkg,
+            sig_arrays=sig_arrays,
+            sig_weights=sig_weights,
+            sig_labels=sig_labels_final,
+            color_sig=color_sig,
+            data=data,
+            data_label=data_label,
+            scale=s,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            xlim=xlim,
+            ax_ratio=ax_ratio,
+            run=run,
+            region=region,
+            channel=channel,
+            subject=subject,
+        )
+
+    if include_data:
+        for col_idx in range(n_cols):
+            fig.align_ylabels([axes[0, col_idx], axes[1, col_idx]])
+
+    plt.subplots_adjust(hspace=0.1, wspace=0.3)
     return fig

@@ -171,9 +171,10 @@ def main(cfg: DictConfig) -> None:
 
         sig_dfs = {}
         if include_signal:
-            sig_mask = ~region_df["eventOrigin"].isin(background_names)
-            for origin in region_df.loc[sig_mask, "eventOrigin"].unique():
-                sig_dfs[origin] = region_df[region_df["eventOrigin"] == origin]
+            for origin in kin_cfg.selected_signals:
+                mask = region_df["eventOrigin"] == origin
+                if mask.any():
+                    sig_dfs[origin] = region_df[mask]
 
         for feat in training_features:
             vals = region_df[feat].dropna()

@@ -23,7 +23,8 @@ significance:
 
 # Kinematic distributions
 kinematic_plots:
-  scale: "linear"
+  scale: "dual"
   scale_factor: 1
   include_data: false
   include_signal: true
+  selected_signals: ["GG_1000_700", "GG_1300_700", "GG_1700_900", "GG_2200_1500", "GG_500_100", "SS_1000_45", "SS_1600_145", "SS_800_245"]
