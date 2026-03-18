@@ -322,6 +322,7 @@ def _draw_kinematic_ax(
 
     # ---- ratio panel ----
     if include_data and ax_ratio is not None:
+        assert n_data_safe is not None
         with np.errstate(divide="ignore", invalid="ignore"):
             ratio = n_data_safe / n_bkg_merged
             ratio_err = np.sqrt(n_data_safe) / n_data_safe
