@@ -55,35 +55,28 @@ def main(cfg: DictConfig) -> None:
             }
         )
 
-        # --- resolve paths ---
         output_paths = get_output_paths(cfg)
         dataframes_dir = root / output_paths["dataframes_dir"]
         models_dir = root / output_paths["models_dir"]
         models_dir.mkdir(parents=True, exist_ok=True)
 
-        # --- load data ---
         df_mc = load_dataframe(dataframes_dir / "mc.parquet")
         log.info("Loaded MC: %d events, %d columns", len(df_mc), len(df_mc.columns))
 
-        # --- class labels ---
         class_names = get_class_names(df_mc)
         n_classes = len(class_names)
         log.info("Classes (%d): %s", n_classes, class_names)
 
-        # --- features & target ---
         X, y, weights = prepare_features_target(df_mc)
         mlflow.log_param("n_features", X.shape[1])
 
-        # --- always k-fold for tuning ---
         n_splits = cfg.tuning.n_splits
         folds = kfold_split(X, y, weights, n_splits=n_splits, seed=cfg.seed)
         log.info("K-fold: %d stratified folds", n_splits)
 
-        # --- create/resume study ---
         storage_path = models_dir / cfg.tuning.storage_filename
         study = create_study(cfg, storage_path)
 
-        # --- MLflow callback for nested trial runs ---
         try:
             from optuna_integration.mlflow import MLflowCallback
 
@@ -100,7 +93,6 @@ def main(cfg: DictConfig) -> None:
             )
             callbacks = []
 
-        # --- optimize ---
         model_name = cfg.model.name
         n_trials = cfg.tuning.n_trials
 
@@ -121,7 +113,6 @@ def main(cfg: DictConfig) -> None:
         else:
             raise ValueError(f"Unknown model: {model_name!r}")
 
-        # --- results ---
         log.info("Study complete: %d trials", len(study.trials))
         n_completed = len(
             [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
@@ -144,13 +135,11 @@ def main(cfg: DictConfig) -> None:
                 {f"best_{k}": v for k, v in study.best_trial.params.items()}
             )
 
-            # --- export best params as YAML ---
             suffix = "xgboost" if model_name == "xgboost" else "dnn"
             params_path = models_dir / f"{suffix}_best_params.yaml"
             export_best_params(study, model_name, cfg.model, params_path)
             mlflow.log_artifact(str(params_path))
 
-        # --- log study DB ---
         mlflow.log_artifact(str(storage_path))
 
         log.info("Tuning complete — results saved to %s", models_dir)

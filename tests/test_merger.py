@@ -78,11 +78,6 @@ def test_dict_to_array():
     assert len(result) == 7
 
 
-# ---------------------------------------------------------------------------
-# merge_signals
-# ---------------------------------------------------------------------------
-
-
 def test_merge_signals_as_is():
     signal = {"GG_100_200": _make_array(3), "SS_300_400": _make_array(4)}
     cfg = OmegaConf.create({"merge": {"signal_strategy": "as_is"}})
@@ -133,11 +128,6 @@ def test_merge_signals_invalid_strategy():
         merge_signals(signal, cfg)
 
 
-# ---------------------------------------------------------------------------
-# group_samples
-# ---------------------------------------------------------------------------
-
-
 def test_group_samples_categorizes_correctly():
     samples = {
         "data22": _make_array(2),
@@ -177,11 +167,6 @@ def test_group_samples_all_background_when_disabled():
     assert len(grouped["data"]) == 0
     assert len(grouped["signal"]) == 0
     assert set(grouped["background"].keys()) == {"ttbar", "diboson"}
-
-
-# ---------------------------------------------------------------------------
-# split_mc_data
-# ---------------------------------------------------------------------------
 
 
 def test_split_mc_data():

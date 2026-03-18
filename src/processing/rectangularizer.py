@@ -18,7 +18,6 @@ def rectangularize_pad_array(
         padding_threshold: Maximum number of entries to pad jagged features to.
         nan_threshold: Minimum fraction of non-NaN values to keep a column.
     """
-    # Detect jagged (variable-length) features
     jagged_features = []
     for feature in ak.fields(array_in):
         try:
@@ -27,20 +26,14 @@ def rectangularize_pad_array(
         except Exception:
             pass
 
-    # Pad each jagged feature to padding_threshold and expand into indexed columns
     for feature in jagged_features:
         padded = ak.pad_none(array_in[feature], target=padding_threshold, clip=True)
         for i in range(padding_threshold):
             array_in = ak.with_field(array_in, padded[:, i], f"{feature}_{i}")
         array_in = array_in[[f for f in ak.fields(array_in) if f != feature]]
 
-    # Convert to pandas DataFrame
     df = ak.to_dataframe(array_in)
-
-    # Drop constant columns
     df = df.loc[:, df.nunique() > 1]
-
-    # Drop columns with fewer than nan_threshold fraction of non-NaN values
     df = df.dropna(axis=1, thresh=int(nan_threshold * len(df)))
 
     return df

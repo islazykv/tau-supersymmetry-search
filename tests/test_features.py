@@ -49,11 +49,6 @@ def test_ntuples_scope_returns_flat_list():
     assert features == ["feat_a", "feat_b", "feat_c"]
 
 
-# ---------------------------------------------------------------------------
-# assign_class_weights
-# ---------------------------------------------------------------------------
-
-
 def test_assign_class_weights_balanced():
     df = pd.DataFrame({"class": [0, 0, 1, 1]})
     weights = assign_class_weights(df)

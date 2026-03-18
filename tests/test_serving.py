@@ -13,11 +13,6 @@ from fastapi.testclient import TestClient
 from src.serving.app import create_app
 from src.serving.registry import BDTAdapter, DNNAdapter
 
-
-# ---------------------------------------------------------------------------
-# Fixtures: tiny trained models
-# ---------------------------------------------------------------------------
-
 FEATURES = ["feat_a", "feat_b", "feat_c"]
 CLASS_NAMES = ["background", "signal"]
 
@@ -82,11 +77,6 @@ def dnn_path(tmp_path: Path) -> Path:
     return path
 
 
-# ---------------------------------------------------------------------------
-# Adapter unit tests
-# ---------------------------------------------------------------------------
-
-
 class TestBDTAdapter:
     def test_feature_names(self, bdt_path: Path) -> None:
         adapter = BDTAdapter(bdt_path)
@@ -127,11 +117,6 @@ class TestDNNAdapter:
         proba = adapter.predict_proba(X)
         assert proba.shape == (3, 2)
         np.testing.assert_allclose(proba.sum(axis=1), 1.0, atol=1e-5)
-
-
-# ---------------------------------------------------------------------------
-# API endpoint tests
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture()

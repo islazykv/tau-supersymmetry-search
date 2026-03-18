@@ -48,30 +48,25 @@ def main(cfg: DictConfig) -> None:
 
     log.info("Starting regions analysis:\n%s", OmegaConf.to_yaml(cfg))
 
-    # --- resolve paths ---
     output_paths = get_output_paths(cfg)
     dataframes_dir = root / output_paths["dataframes_dir"]
     plots_dir = root / output_paths["plots_dir"] / "ml_regions"
     plots_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- load data ---
     df_mc = load_dataframe(dataframes_dir / "mc.parquet")
     log.info("Loaded MC: %d events, %d columns", len(df_mc), len(df_mc.columns))
 
-    # --- class labels ---
     display_labels = OmegaConf.to_container(cfg.merge.display_labels, resolve=True)
     class_names = get_class_names(df_mc)
     class_labels = get_class_labels(df_mc, display_labels=display_labels)
     log.info("Classes (%d): %s", len(class_names), class_names)
 
-    # --- model type and predictions ---
     model_type = cfg.ml_regions.model_type
     predictions_df = load_dataframe(
         dataframes_dir / f"{model_type}_predictions.parquet"
     )
     log.info("Predictions loaded: %d events", len(predictions_df))
 
-    # --- recover test indices ---
     X, y, weights = prepare_features_target(df_mc)
     split_strategy = cfg.pipeline.split_strategy
 
@@ -91,7 +86,6 @@ def main(cfg: DictConfig) -> None:
     else:
         raise ValueError(f"Unknown split_strategy: {split_strategy!r}")
 
-    # --- build analysis frame ---
     analysis_df = build_analysis_frame(df_mc, predictions_df, test_indices)
     log.info(
         "Analysis frame: %d events, %d columns",
@@ -99,7 +93,6 @@ def main(cfg: DictConfig) -> None:
         len(analysis_df.columns),
     )
 
-    # --- region construction ---
     t = cfg.ml_regions.thresholds
     thresholds = RegionThresholds(
         control=t.control,
@@ -108,7 +101,6 @@ def main(cfg: DictConfig) -> None:
     )
     regions = split_into_regions(analysis_df, thresholds)
 
-    # --- signal score distributions ---
     score_cfg = cfg.ml_regions.score_plots
     threshold_tuple = (t.control, t.validation, t.signal)
 
@@ -129,7 +121,6 @@ def main(cfg: DictConfig) -> None:
                 plt.close(fig)
     log.info("Signal score distributions saved.")
 
-    # --- significance grid ---
     background_names = list(
         OmegaConf.to_container(cfg.merge.primary_groups, resolve=True).keys()
     )
@@ -152,7 +143,6 @@ def main(cfg: DictConfig) -> None:
         plt.close(fig)
         log.info("Significance grid saved.")
 
-    # --- kinematic distributions ---
     training_features = [
         c
         for c in df_mc.columns
@@ -209,7 +199,6 @@ def main(cfg: DictConfig) -> None:
 
         log.info("Kinematic distributions for %s saved.", region_name)
 
-    # --- export region dataframes ---
     for region_name, region_df in regions.items():
         save_dataframe(
             region_df,

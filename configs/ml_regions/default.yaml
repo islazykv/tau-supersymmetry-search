@@ -1,27 +1,20 @@
-# ML-based regions analysis configuration
-
-# Model type for predictions: "bdt" or "dnn"
 model_type: "bdt"
 
-# Region score thresholds
 thresholds:
   control: 0.0
   validation: 0.6
   signal: 0.8
 
-# Signal score distribution plots
 score_plots:
   bins: 50
   modes: ["binary", "multiclass"]
   scales: ["linear", "log"]
   weighted: [false, true]
 
-# Significance grid (pyhf CLs)
 significance:
   bins: 20
   bkg_uncertainty: 0.3
 
-# Kinematic distributions
 kinematic_plots:
   scale: "dual"
   scale_factor: 1

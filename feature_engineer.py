@@ -37,12 +37,10 @@ def main(cfg: DictConfig):
     output_paths = get_output_paths(cfg)
     input_dir = output_paths["samples_dir"]
 
-    # --- load ---
     sample_ids = [f.stem for f in input_dir.glob("*.parquet")]
     samples = load_samples(input_dir, sample_ids)
     log.info("Loaded %d samples", len(samples))
 
-    # --- group ---
     grouped = group_samples(samples, cfg)
     log.info(
         "Grouped samples — data: %d, background: %d, signal: %d",
@@ -51,7 +49,6 @@ def main(cfg: DictConfig):
         len(grouped["signal"]),
     )
 
-    # --- split ---
     samples_mc, samples_data = split_mc_data(grouped)
     log.info(
         "Split into MC (%d sample(s)) and data (%d sample(s))",
@@ -59,24 +56,19 @@ def main(cfg: DictConfig):
         len(samples_data),
     )
 
-    # --- class ---
     assign_class(samples_mc)
 
-    # --- flatten ---
     samples_mc = dict_to_array(samples_mc)
     samples_data = dict_to_array(samples_data)
 
-    # --- extract ---
     event_origin = extract_feature_from_array(samples_mc, "eventOrigin")
     tau_n = extract_feature_from_array(samples_mc, "tau_n")
 
-    # --- drop ---
     features_to_drop = resolve_features_to_drop(cfg)
     samples_mc = drop_features(samples_mc, features_to_drop)
     samples_data = drop_features(samples_data, features_to_drop)
     log.info("Dropped %d features", len(features_to_drop))
 
-    # --- rectangularize ---
     df_mc = rectangularize_pad_array(
         array_in=samples_mc,
         padding_threshold=cfg.data.padding_threshold,
@@ -94,25 +86,19 @@ def main(cfg: DictConfig):
         len(df_data.columns),
     )
 
-    # --- align ---
     df_data = df_data[df_mc.columns.intersection(df_data.columns)]
 
-    # --- fill ---
     df_mc = fill_padding(df=df_mc, strategy="0")
     df_data = fill_padding(df=df_data, strategy="0")
 
-    # --- reattach ---
     df_mc["eventOrigin"] = event_origin
     df_mc["tau_n"] = tau_n
 
-    # --- class weights ---
     weights = assign_class_weights(df_mc)
     log.info("Class weights: %s", weights.to_dict())
 
-    # --- validate ---
     df_mc = validate_mc(df_mc)
 
-    # --- save ---
     dataframes_dir = output_paths["dataframes_dir"]
     save_dataframe(df=df_mc, path=dataframes_dir / "mc.parquet")
     save_dataframe(df=df_data, path=dataframes_dir / "data.parquet")

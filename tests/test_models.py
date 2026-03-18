@@ -31,10 +31,6 @@ from src.models.dnn import (
     train as dnn_train,
 )
 
-# ---------------------------------------------------------------------------
-# Shared fixtures
-# ---------------------------------------------------------------------------
-
 FEATURES = ["f0", "f1", "f2", "f3", "f4"]
 N_SAMPLES = 60
 
@@ -47,11 +43,6 @@ def synthetic_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     y = pd.Series(rng.randint(0, 2, size=N_SAMPLES))
     split = N_SAMPLES // 2
     return X.iloc[:split], X.iloc[split:], y.iloc[:split], y.iloc[split:]
-
-
-# ---------------------------------------------------------------------------
-# BDT tests
-# ---------------------------------------------------------------------------
 
 
 class TestBDTBuildParams:
@@ -124,11 +115,6 @@ class TestBDTSerialization:
         _, proba_after = bdt_predict(loaded, X_val)
 
         np.testing.assert_allclose(proba_before, proba_after, atol=1e-6)
-
-
-# ---------------------------------------------------------------------------
-# DNN tests
-# ---------------------------------------------------------------------------
 
 
 class TestDNNClassifier:

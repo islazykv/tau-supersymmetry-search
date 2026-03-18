@@ -40,17 +40,14 @@ def main(cfg: DictConfig):
     plots_dir = output_paths["plots_dir"] / "eda"
     plots_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- load ---
     df_mc = load_dataframe(dataframes_dir / "mc.parquet")
     log.info("Loaded MC: %d rows, %d columns", len(df_mc), len(df_mc.columns))
 
-    # --- class labels ---
     display_labels = OmegaConf.to_container(cfg.merge.display_labels, resolve=True)
     class_names = get_class_names(df_mc)
     class_labels = get_class_labels(df_mc, display_labels=display_labels)
     log.info("Classes: %s", class_names)
 
-    # --- data quality ---
     missing = summarize_missing(df_mc)
     if missing.empty:
         log.info("Missing values: none")
@@ -63,7 +60,6 @@ def main(cfg: DictConfig):
         len(ranges.columns.get_level_values(0).unique()),
     )
 
-    # --- plots ---
     log.info("Generating class balance plot...")
     fig = plot_class_balance(df_mc, class_labels=class_labels)
     save_figure(fig, plots_dir / "class_balance.png")

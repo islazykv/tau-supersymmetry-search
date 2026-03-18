@@ -92,7 +92,6 @@ def _build_router() -> APIRouter:
     ) -> BatchPredictResponse:
         adapter = _get_adapter(request)
         expected = adapter.feature_names()
-        # Validate all samples
         validated = [_validate_features(s, expected) for s in req.samples]
         df = pd.DataFrame(validated)
         proba: np.ndarray = adapter.predict_proba(df)
@@ -123,7 +122,6 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-        # Load model on startup
         if model_type and model_path:
             app.state.adapter = load_adapter(
                 model_type, Path(model_path), class_names=class_names
@@ -133,7 +131,6 @@ def create_app(
             app.state.adapter = None
             app.state.model_type = ""
         yield
-        # Cleanup
         app.state.adapter = None
 
     app = FastAPI(

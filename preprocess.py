@@ -31,7 +31,6 @@ def main(cfg: DictConfig):
         len(sample_lists["signal"]),
     )
 
-    # --- process ---
     data = process_samples(cfg, "data", [s.id for s in sample_lists["data"]])
     log.info("Processed %d data sample(s)", len(data))
 
@@ -43,21 +42,16 @@ def main(cfg: DictConfig):
     signal = process_samples(cfg, "signal", [s.id for s in sample_lists["signal"]])
     log.info("Processed %d signal samples", len(signal))
 
-    # --- group ---
     samples = {"data": data, "background": background, "signal": signal}
 
-    # --- merge backgrounds ---
     samples["background"] = merge_backgrounds(samples["background"], cfg)
     log.info("Merged backgrounds into %d group(s)", len(samples["background"]))
 
-    # --- event origin ---
     assign_event_origin(samples)
 
-    # --- merge signals ---
     samples["signal"] = merge_signals(samples["signal"], cfg)
     log.info("Merged signal into %d group(s)", len(samples["signal"]))
 
-    # --- save ---
     output_paths = get_output_paths(cfg)
     samples_dir = output_paths["samples_dir"]
     save_samples(samples["data"], samples_dir)

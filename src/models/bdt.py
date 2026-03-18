@@ -12,8 +12,6 @@ from tqdm.auto import tqdm
 from src.models.splits import build_predictions_frame  # noqa: F401
 
 log = logging.getLogger(__name__)
-
-# XGBoost objectives and metrics keyed by number of classes
 _MULTICLASS_OBJECTIVE = "multi:softproba"
 _MULTICLASS_METRIC = "mlogloss"
 _BINARY_OBJECTIVE = "binary:logistic"

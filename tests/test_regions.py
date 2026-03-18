@@ -14,11 +14,6 @@ from src.regions.construction import (
 from src.regions.significance import construct_grid
 
 
-# ---------------------------------------------------------------------------
-# split_into_regions
-# ---------------------------------------------------------------------------
-
-
 class TestSplitIntoRegions:
     def test_boundaries(self) -> None:
         df = pd.DataFrame({"p_signal": [0.1, 0.3, 0.5, 0.7, 0.9]})
@@ -48,11 +43,6 @@ class TestSplitIntoRegions:
         assert len(regions["SR"]) == 0
 
 
-# ---------------------------------------------------------------------------
-# build_analysis_frame
-# ---------------------------------------------------------------------------
-
-
 class TestBuildAnalysisFrame:
     def test_happy_path(self) -> None:
         df_mc = pd.DataFrame(
@@ -75,11 +65,6 @@ class TestBuildAnalysisFrame:
         preds = pd.DataFrame({"y_pred": [0, 1]})  # 2 rows vs 3
         with pytest.raises(ValueError, match="different lengths"):
             build_analysis_frame(df_mc, preds, df_mc.index)
-
-
-# ---------------------------------------------------------------------------
-# construct_grid
-# ---------------------------------------------------------------------------
 
 
 class TestConstructGrid:

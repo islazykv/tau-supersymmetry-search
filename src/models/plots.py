@@ -13,11 +13,6 @@ _LEGEND_KW: dict = dict(
 )
 
 
-# ---------------------------------------------------------------------------
-# BDT (XGBoost) training curves
-# ---------------------------------------------------------------------------
-
-
 def plot_training_curves(
     evals_result: dict[str, dict[str, list[float]]],
     metric: str,
@@ -92,11 +87,6 @@ def plot_kfold_training_curves(
     ampl.draw_atlas_label(0.02, 0.97, ax=ax)
     fig.tight_layout()
     return fig
-
-
-# ---------------------------------------------------------------------------
-# DNN (PyTorch) training curves
-# ---------------------------------------------------------------------------
 
 
 def plot_dnn_training_curves(

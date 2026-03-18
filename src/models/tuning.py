@@ -35,11 +35,6 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# Parameter suggestion
-# ---------------------------------------------------------------------------
-
-
 def suggest_params(
     trial: optuna.Trial,
     search_space: dict,
@@ -81,11 +76,6 @@ def suggest_params(
     return params
 
 
-# ---------------------------------------------------------------------------
-# BDT objective
-# ---------------------------------------------------------------------------
-
-
 def bdt_objective(
     trial: optuna.Trial,
     cfg: DictConfig,
@@ -102,7 +92,6 @@ def bdt_objective(
     search_space = OmegaConf.to_container(cfg.tuning.search_space.xgboost, resolve=True)
     suggested = suggest_params(trial, search_space, "xgboost")
 
-    # Build base params from model config, then override with suggested values
     base_params = build_params(cfg, n_classes=n_classes)
     base_params.update(suggested)
     metric = base_params["eval_metric"]
@@ -140,11 +129,6 @@ def bdt_objective(
     return float(np.mean(fold_scores))
 
 
-# ---------------------------------------------------------------------------
-# DNN objective
-# ---------------------------------------------------------------------------
-
-
 def dnn_objective(
     trial: optuna.Trial,
     cfg: DictConfig,
@@ -162,7 +146,6 @@ def dnn_objective(
     search_space = OmegaConf.to_container(cfg.tuning.search_space.dnn, resolve=True)
     suggested = suggest_params(trial, search_space, "dnn")
 
-    # Reconstruct hidden_sizes from n_layers × layer_size
     n_layers = suggested.pop("n_layers")
     layer_size = suggested.pop("layer_size")
     hidden_sizes = [layer_size] * n_layers
@@ -238,7 +221,6 @@ def _train_dnn_with_pruning(
     float
         Best validation loss for this fold.
     """
-    # Build fresh model
     model = DNNClassifier(
         n_features=n_features,
         n_classes=n_classes,
@@ -246,22 +228,18 @@ def _train_dnn_with_pruning(
         dropout=dropout,
     ).to(device)
 
-    # Scaler
     scaler = MinMaxScaler()
     scaler.fit(X_tr.values)
 
-    # Class-weighted criterion
     class_weights = w_tr.groupby(y_tr).first().sort_index().values
     weight_tensor = torch.tensor(class_weights, dtype=torch.float32, device=device)
     criterion = nn.CrossEntropyLoss(weight=weight_tensor)
 
-    # Reproducibility
     torch.manual_seed(seed)
     if device.type == "cuda":
         torch.cuda.manual_seed_all(seed)
     gen = torch.Generator().manual_seed(seed)
 
-    # Move data to device
     X_train_t = torch.tensor(
         scaler.transform(X_tr.values), dtype=torch.float32, device=device
     )
@@ -281,7 +259,6 @@ def _train_dnn_with_pruning(
     patience_counter = 0
 
     for epoch in range(n_epochs):
-        # --- training ---
         model.train()
         running_loss = 0.0
         for idx in _batch_indices(n_train, batch_size, shuffle=True, generator=gen):
@@ -294,13 +271,11 @@ def _train_dnn_with_pruning(
             grad_scaler.update()
             running_loss += loss.item() * len(idx)
 
-        # --- validation ---
         model.eval()
         with torch.no_grad(), autocast(enabled=use_amp):
             val_logits = model(X_val_t)
             epoch_val_loss = criterion(val_logits, y_val_t).item()
 
-        # --- early stopping ---
         if epoch_val_loss < best_val_loss:
             best_val_loss = epoch_val_loss
             patience_counter = 0
@@ -319,11 +294,6 @@ def _train_dnn_with_pruning(
             break
 
     return best_val_loss
-
-
-# ---------------------------------------------------------------------------
-# Study factory
-# ---------------------------------------------------------------------------
 
 
 def create_study(cfg: DictConfig, storage_path: Path) -> optuna.Study:
@@ -348,7 +318,6 @@ def create_study(cfg: DictConfig, storage_path: Path) -> optuna.Study:
     study_name = cfg.tuning.study_name
     direction = cfg.tuning.direction
 
-    # Sampler
     sampler_name = cfg.tuning.sampler
     if sampler_name == "TPESampler":
         sampler = optuna.samplers.TPESampler(seed=cfg.seed)
@@ -357,7 +326,6 @@ def create_study(cfg: DictConfig, storage_path: Path) -> optuna.Study:
     else:
         raise ValueError(f"Unknown sampler: {sampler_name!r}")
 
-    # Pruner
     pruner_name = cfg.tuning.pruner
     if pruner_name == "MedianPruner":
         pruner = optuna.pruners.MedianPruner()
@@ -382,11 +350,6 @@ def create_study(cfg: DictConfig, storage_path: Path) -> optuna.Study:
         log.info("Resuming study with %d completed trials", n_completed)
 
     return study
-
-
-# ---------------------------------------------------------------------------
-# Export best params
-# ---------------------------------------------------------------------------
 
 
 def export_best_params(
@@ -418,18 +381,15 @@ def export_best_params(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Start from base model config
     merged = OmegaConf.to_container(base_model_cfg, resolve=True)
     best_params = study.best_trial.params
 
     if model_name == "pytorch_dnn":
-        # Reconstruct hidden_sizes
         n_layers = best_params.pop("n_layers", None)
         layer_size = best_params.pop("layer_size", None)
         if n_layers is not None and layer_size is not None:
             merged["hidden_sizes"] = [layer_size] * n_layers
 
-    # Override with best params
     merged.update(best_params)
 
     with open(output_path, "w") as f:

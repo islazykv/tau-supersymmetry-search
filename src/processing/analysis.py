@@ -65,7 +65,6 @@ def resolve_samples(cfg: DictConfig) -> dict[str, list[Sample]]:
     """
     result: dict[str, list[Sample]] = {}
 
-    # --- data ---
     data_cfg = cfg.samples.data
     if data_cfg.get("enabled", False):
         result["data"] = [
@@ -74,7 +73,6 @@ def resolve_samples(cfg: DictConfig) -> dict[str, list[Sample]]:
     else:
         result["data"] = []
 
-    # --- background ---
     bg_cfg = cfg.samples.background
     if bg_cfg.get("enabled", False):
         excludes = list(bg_cfg.get("exclude", []))
@@ -82,7 +80,6 @@ def resolve_samples(cfg: DictConfig) -> dict[str, list[Sample]]:
     else:
         result["background"] = []
 
-    # --- signal ---
     sig_cfg = cfg.samples.signal
     if sig_cfg.get("enabled", False):
         campaign = cfg.analysis.campaigns[0]

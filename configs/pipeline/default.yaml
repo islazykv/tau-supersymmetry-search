@@ -7,5 +7,4 @@ save_model: true
 split_strategy: "train_test"
 n_splits: 5
 
-# ---Early Stopping---
 early_stopping_rounds: 50

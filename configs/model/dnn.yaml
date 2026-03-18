@@ -1,17 +1,13 @@
 name: "pytorch_dnn"
 
-# ---Network Architecture---
 hidden_sizes: [64, 64, 64]
 activation: "ReLU"
 dropout: 0.2
 
-# ---Training Parameters---
 n_epochs: 1000
 batch_size: 1024
 
-# ---Optimizer Parameters---
 learning_rate: 0.005
 weight_decay: 1e-5
 
-# ---Mixed Precision---
 amp: true
