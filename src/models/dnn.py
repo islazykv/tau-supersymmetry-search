@@ -21,11 +21,6 @@ from tqdm.auto import tqdm
 log = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# Model
-# ---------------------------------------------------------------------------
-
-
 class DNNClassifier(nn.Module):
     """Configurable fully-connected classifier.
 
@@ -75,22 +70,12 @@ class DNNClassifier(nn.Module):
         return self.head(self.backbone(x))
 
 
-# ---------------------------------------------------------------------------
-# Device
-# ---------------------------------------------------------------------------
-
-
 def resolve_device(cfg: DictConfig | None = None) -> torch.device:
     """Return CUDA device if available, otherwise CPU."""
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         return torch.device("cuda")
     return torch.device("cpu")
-
-
-# ---------------------------------------------------------------------------
-# Builders
-# ---------------------------------------------------------------------------
 
 
 def build_model(
@@ -125,11 +110,6 @@ def build_criterion(
     if class_weights is not None:
         weight = torch.tensor(class_weights, dtype=torch.float32, device=device)
     return nn.CrossEntropyLoss(weight=weight)
-
-
-# ---------------------------------------------------------------------------
-# Training
-# ---------------------------------------------------------------------------
 
 
 def _batch_indices(
@@ -192,7 +172,6 @@ def train(
     batch_size: int = mcfg["batch_size"]
     use_amp: bool = mcfg.get("amp", False) and device.type == "cuda"
 
-    # Reproducibility
     torch.manual_seed(cfg.seed)
     if device.type == "cuda":
         torch.cuda.manual_seed_all(cfg.seed)
@@ -226,7 +205,6 @@ def train(
     pbar = tqdm(total=n_epochs, desc="Training", unit="epoch") if verbose else None
 
     for epoch in range(n_epochs):
-        # --- training ---
         model.train()
         running_loss = 0.0
         for idx in _batch_indices(n_train, batch_size, shuffle=True, generator=gen):
@@ -250,7 +228,6 @@ def train(
 
         val_loss_history.append(epoch_val_loss)
 
-        # --- early stopping ---
         if epoch_val_loss < best_val_loss:
             best_val_loss = epoch_val_loss
             best_epoch = epoch
@@ -273,7 +250,6 @@ def train(
     if pbar is not None:
         pbar.close()
 
-    # Restore best weights
     if best_state is not None:
         model.load_state_dict(best_state)
     model.to(device)
@@ -334,7 +310,6 @@ def train_kfold(
     for fold_idx, (X_tr, X_te, y_tr, y_te, w_tr, _) in enumerate(folds):
         log.info("Training fold %d / %d", fold_idx + 1, len(folds))
 
-        # Fresh model, scaler, and criterion per fold
         n_features = X_tr.shape[1]
         fold_model = build_model(cfg, n_features, n_classes).to(device)
         fold_scaler = build_scaler(X_tr)
@@ -380,11 +355,6 @@ def train_kfold(
     return models, scalers, y_pred_oof, y_proba_oof, y_test_oof, fold_histories
 
 
-# ---------------------------------------------------------------------------
-# Prediction
-# ---------------------------------------------------------------------------
-
-
 def predict(
     model: DNNClassifier,
     X: pd.DataFrame,
@@ -426,11 +396,6 @@ def predict(
     y_proba = np.vstack(probas)
     y_pred = np.argmax(y_proba, axis=1)
     return y_pred, y_proba
-
-
-# ---------------------------------------------------------------------------
-# Serialization
-# ---------------------------------------------------------------------------
 
 
 def save_model(model: DNNClassifier, scaler: MinMaxScaler, path: Path) -> None:

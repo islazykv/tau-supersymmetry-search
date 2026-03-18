@@ -7,11 +7,6 @@ import pytest
 from src.processing.rectangularizer import fill_padding, rectangularize_pad_array
 
 
-# ---------------------------------------------------------------------------
-# rectangularize_pad_array
-# ---------------------------------------------------------------------------
-
-
 def test_pad_array_expands_jagged_features():
     array = ak.Array(
         {
@@ -51,11 +46,6 @@ def test_pad_array_nan_threshold_drops_sparse_columns():
     df_strict = rectangularize_pad_array(array, padding_threshold=2, nan_threshold=1.0)
 
     assert len(df_all.columns) >= len(df_strict.columns)
-
-
-# ---------------------------------------------------------------------------
-# fill_padding
-# ---------------------------------------------------------------------------
 
 
 def _make_df_with_nans() -> pd.DataFrame:

@@ -1,6 +1,5 @@
 name: "xgboost"
 
-# ---General & Booster Parameters---
 booster: "gbtree"
 n_estimators: 10000
 learning_rate: 0.5
@@ -13,7 +12,6 @@ reg_alpha: 0
 reg_lambda: 0
 max_delta_step: 0
 
-# ---GPU Task Parameters---
 tree_method: "hist"
 device: "cuda"
 seed: 1

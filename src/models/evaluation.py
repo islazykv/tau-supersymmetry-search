@@ -312,11 +312,6 @@ def plot_score_distributions(
     return fig
 
 
-# ---------------------------------------------------------------------------
-# DNN-specific evaluation
-# ---------------------------------------------------------------------------
-
-
 def plot_permutation_importance(
     model,
     X: pd.DataFrame,

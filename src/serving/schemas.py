@@ -5,9 +5,6 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
-# -- Requests ----------------------------------------------------------------
-
-
 class PredictRequest(BaseModel):
     """Single-sample prediction request."""
 
@@ -20,9 +17,6 @@ class BatchPredictRequest(BaseModel):
     samples: list[dict[str, float]] = Field(
         ..., description="List of feature name → value mappings"
     )
-
-
-# -- Responses ---------------------------------------------------------------
 
 
 class PredictResponse(BaseModel):

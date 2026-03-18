@@ -9,7 +9,6 @@ import pandera.pandas as pa
 
 log = logging.getLogger(__name__)
 
-# Columns that carry metadata (not training features).
 METADATA_COLUMNS = {"class", "class_weight", "eventOrigin", "tau_n", "weight"}
 
 

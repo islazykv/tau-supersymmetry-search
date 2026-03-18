@@ -71,7 +71,6 @@ def main(cfg: DictConfig) -> None:
                 }
             )
 
-            # --- resolve paths ---
             output_paths = get_output_paths(cfg)
             dataframes_dir = root / output_paths["dataframes_dir"]
             models_dir = root / output_paths["models_dir"]
@@ -79,22 +78,18 @@ def main(cfg: DictConfig) -> None:
             models_dir.mkdir(parents=True, exist_ok=True)
             plots_dir.mkdir(parents=True, exist_ok=True)
 
-            # --- load data ---
             df_mc = load_dataframe(dataframes_dir / "mc.parquet")
             log.info("Loaded MC: %d events, %d columns", len(df_mc), len(df_mc.columns))
 
-            # --- class labels ---
             class_names = get_class_names(df_mc)
             n_classes = len(class_names)
             log.info("Classes (%d): %s", n_classes, class_names)
             mlflow.log_param("n_classes", n_classes)
             mlflow.log_param("class_names", class_names)
 
-            # --- features & target ---
             X, y, weights = prepare_features_target(df_mc)
             mlflow.log_param("n_features", X.shape[1])
 
-            # --- split ---
             split_strategy = cfg.pipeline.split_strategy
 
             if split_strategy == "train_test":
@@ -116,11 +111,9 @@ def main(cfg: DictConfig) -> None:
             else:
                 raise ValueError(f"Unknown split_strategy: {split_strategy!r}")
 
-            # --- device ---
             device = resolve_device()
             log.info("Device: %s", device)
 
-            # --- train ---
             if split_strategy == "train_test":
                 model = build_model(cfg, n_features=X.shape[1], n_classes=n_classes)
                 model = model.to(device)
@@ -187,7 +180,6 @@ def main(cfg: DictConfig) -> None:
                 save_figure(fig, curve_path)
                 mlflow.log_artifact(str(curve_path))
 
-            # --- predictions DataFrame ---
             predictions_df = build_predictions_frame(
                 y_test, y_pred, y_proba, class_names
             )
@@ -195,7 +187,6 @@ def main(cfg: DictConfig) -> None:
             save_dataframe(predictions_df, predictions_path)
             mlflow.log_artifact(str(predictions_path))
 
-            # --- save model(s) ---
             if cfg.pipeline.save_model:
                 if split_strategy == "train_test":
                     model_path = models_dir / "dnn.pt"

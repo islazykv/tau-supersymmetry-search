@@ -43,7 +43,6 @@ class BDTAdapter(ModelAdapter):
         return list(names) if names is not None else []
 
     def n_classes(self) -> int:
-        # XGBoost n_classes_ attribute
         n = getattr(self._model, "n_classes_", None)
         if n is not None:
             return int(n)

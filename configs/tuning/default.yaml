@@ -1,23 +1,15 @@
-# Optuna hyperparameter tuning configuration
 # Override via CLI: python tune.py tuning.n_trials=200 tuning.search_space.xgboost.max_depth.high=10
-
-# --- Study settings ---
 n_trials: 100
 sampler: "TPESampler"
 pruner: "MedianPruner"
 direction: "minimize"
 
-# --- Cross-validation ---
 n_splits: 5
 early_stopping_rounds: 50
 
-# --- Persistence (SQLite for resumability) ---
 study_name: "tau-supersymmetry-search-tuning"
 storage_filename: "optuna_study.db"
 
-# --- Search spaces ---
-# Each parameter: {type: float|int|categorical, low: ..., high: ..., log: true/false}
-# or for categorical: {type: categorical, choices: [...]}
 search_space:
   xgboost:
     learning_rate:

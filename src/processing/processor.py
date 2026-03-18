@@ -13,11 +13,6 @@ from src.processing.features import resolve_features
 log = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# Path helpers
-# ---------------------------------------------------------------------------
-
-
 def _resolve_path(
     cfg: DictConfig,
     sample_type: str,
@@ -38,11 +33,6 @@ def _resolve_path(
         campaign=campaign,
         sample=sample_id,
     )
-
-
-# ---------------------------------------------------------------------------
-# Cuts
-# ---------------------------------------------------------------------------
 
 
 def _ntau_from_channel(channel: str) -> str:
@@ -327,11 +317,6 @@ def _compute_weight(ar: ak.Array) -> ak.Array:
         * ar.mu_weight
     )
     return ar
-
-
-# ---------------------------------------------------------------------------
-# Main entry point
-# ---------------------------------------------------------------------------
 
 
 def process_samples(

@@ -20,11 +20,6 @@ _LEGEND_KW: dict = dict(
 _REGION_COLORS: dict[str, str] = {"CR": "red", "VR": "blue", "SR": "green"}
 
 
-# ---------------------------------------------------------------------------
-# Signal output score distribution
-# ---------------------------------------------------------------------------
-
-
 def plot_signal_score(
     df: pd.DataFrame,
     class_labels: list[str],
@@ -136,11 +131,6 @@ def plot_signal_score(
     return fig
 
 
-# ---------------------------------------------------------------------------
-# Significance grid heatmap
-# ---------------------------------------------------------------------------
-
-
 def plot_significance_grid(
     grids: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]],
     run_label: str = "Run2",
@@ -200,11 +190,6 @@ def plot_significance_grid(
 
     fig.tight_layout()
     return fig
-
-
-# ---------------------------------------------------------------------------
-# Kinematic distribution
-# ---------------------------------------------------------------------------
 
 
 def _build_caption(
