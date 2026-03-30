@@ -1,24 +1,15 @@
+"""BDT training pipeline with MLflow experiment tracking."""
+
+from __future__ import annotations
+
 import logging
 
-import hydra
-import matplotlib
 import mlflow
 import pyrootutils
 from omegaconf import DictConfig, OmegaConf
 
-matplotlib.use("Agg")
-
-logging.getLogger("mlflow").setLevel(logging.WARNING)
-logging.getLogger("alembic").setLevel(logging.WARNING)
-
-root = pyrootutils.setup_root(
-    search_from=__file__,
-    indicator=[".git", "pyproject.toml"],
-    pythonpath=True,
-    cwd=True,
-)
-
-from src.models.bdt import (  # noqa: E402
+from src.eda.utils import get_class_names
+from src.models.bdt import (
     build_params,
     build_predictions_frame,
     get_evals_result,
@@ -27,23 +18,23 @@ from src.models.bdt import (  # noqa: E402
     train,
     train_kfold,
 )
-from src.models.plots import plot_kfold_training_curves, plot_training_curves  # noqa: E402
-from src.models.splits import (  # noqa: E402
+from src.models.plots import plot_kfold_training_curves, plot_training_curves
+from src.models.splits import (
     kfold_split,
     prepare_features_target,
     train_test_split,
 )
-from src.eda.utils import get_class_names  # noqa: E402
-from src.processing.analysis import get_output_paths  # noqa: E402
-from src.processing.io import load_dataframe, save_dataframe  # noqa: E402
-from src.visualization.plots import save_figure  # noqa: E402
+from src.processing.analysis import get_output_paths
+from src.processing.io import load_dataframe, save_dataframe
+from src.visualization.plots import save_figure
 
 log = logging.getLogger(__name__)
 
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="config")
-def main(cfg: DictConfig) -> None:
+def train_bdt(cfg: DictConfig) -> None:
     """Run the full BDT training pipeline with MLflow experiment tracking."""
+    root = pyrootutils.find_root(indicator=[".git", "pyproject.toml"])
+
     log.info("Starting BDT training:\n%s", OmegaConf.to_yaml(cfg))
 
     mlflow.set_tracking_uri(f"file://{root}/mlruns")
@@ -177,7 +168,3 @@ def main(cfg: DictConfig) -> None:
             mlflow.set_tag("mlflow.runStatus", "FAILED")
             log.exception("Training failed")
             raise
-
-
-if __name__ == "__main__":
-    main()

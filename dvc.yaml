@@ -1,17 +1,19 @@
 stages:
   preprocess:
-    cmd: uv run python preprocess.py
+    cmd: uv run python run.py stage=preprocess
     deps:
-      - preprocess.py
+      - run.py
+      - src/pipelines/preprocess.py
       - src/processing/
       - configs/
     outs:
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/samples/
 
   feature_engineer:
-    cmd: uv run python feature_engineer.py
+    cmd: uv run python run.py stage=feature_engineer
     deps:
-      - feature_engineer.py
+      - run.py
+      - src/pipelines/feature_engineer.py
       - src/processing/
       - configs/
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/samples/
@@ -20,9 +22,10 @@ stages:
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/data.parquet
 
   eda:
-    cmd: uv run python eda.py
+    cmd: uv run python run.py stage=eda
     deps:
-      - eda.py
+      - run.py
+      - src/pipelines/eda.py
       - src/eda/
       - configs/
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
@@ -30,9 +33,10 @@ stages:
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/plots/eda/
 
   train_bdt:
-    cmd: uv run python train_bdt.py
+    cmd: uv run python run.py stage=train
     deps:
-      - train_bdt.py
+      - run.py
+      - src/pipelines/train_bdt.py
       - src/models/
       - configs/
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
@@ -44,9 +48,10 @@ stages:
           cache: false
 
   evaluate_bdt:
-    cmd: uv run python evaluate_bdt.py
+    cmd: uv run python run.py stage=evaluate
     deps:
-      - evaluate_bdt.py
+      - run.py
+      - src/pipelines/evaluate_bdt.py
       - src/models/evaluation.py
       - configs/
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
@@ -59,9 +64,10 @@ stages:
           cache: false
 
   train_dnn:
-    cmd: uv run python train_dnn.py model=dnn
+    cmd: uv run python run.py stage=train model=dnn
     deps:
-      - train_dnn.py
+      - run.py
+      - src/pipelines/train_dnn.py
       - src/models/
       - configs/
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
@@ -73,9 +79,10 @@ stages:
           cache: false
 
   evaluate_dnn:
-    cmd: uv run python evaluate_dnn.py model=dnn
+    cmd: uv run python run.py stage=evaluate model=dnn
     deps:
-      - evaluate_dnn.py
+      - run.py
+      - src/pipelines/evaluate_dnn.py
       - src/models/evaluation.py
       - configs/
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet
@@ -88,9 +95,10 @@ stages:
           cache: false
 
   regions:
-    cmd: uv run python regions.py
+    cmd: uv run python run.py stage=regions
     deps:
-      - regions.py
+      - run.py
+      - src/pipelines/regions.py
       - src/regions/
       - configs/
       - data/processed/ML/25.2.28/Run2/Preselection/1_tau/dataframes/mc.parquet

@@ -17,13 +17,10 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy source code and entry points
+# Copy source code and unified entry point
 COPY src/ src/
 COPY configs/ configs/
-COPY preprocess.py feature_engineer.py eda.py tune.py \
-     train_bdt.py train_dnn.py \
-     evaluate_bdt.py evaluate_dnn.py regions.py \
-     serve.py ./
+COPY run.py ./
 
 EXPOSE 8000
 
@@ -31,11 +28,11 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/health')" || exit 1
 
-# Any script can be passed as an argument:
-#   docker run tau-supersymmetry-search train_bdt.py
-#   docker run tau-supersymmetry-search train_dnn.py
-#   docker run tau-supersymmetry-search preprocess.py
-#   docker run tau-supersymmetry-search tune.py model=dnn tuning.n_trials=100
-#   docker run -p 8000:8000 tau-supersymmetry-search serve.py --model-type bdt --model-path models/bdt.ubj
+# Any stage can be run via:
+#   docker run tau-supersymmetry-search python run.py stage=train
+#   docker run tau-supersymmetry-search python run.py stage=train model=dnn
+#   docker run tau-supersymmetry-search python run.py stage=preprocess
+#   docker run tau-supersymmetry-search python run.py stage=tune model=dnn tuning.n_trials=100
+#   docker run -p 8000:8000 tau-supersymmetry-search python run.py stage=serve
 ENTRYPOINT ["python"]
-CMD ["train_bdt.py"]
+CMD ["run.py", "stage=train"]

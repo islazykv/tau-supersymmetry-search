@@ -35,15 +35,15 @@ graph LR
     style G fill:#6a2c70,stroke:#888,color:#fff
 ```
 
-| Stage | Script | Description |
-|-------|--------|-------------|
-| Preprocessing | `preprocess.py` | Selection cuts, event weights, sample merging |
-| Feature Engineering | `feature_engineer.py` | Derived feature computation |
-| EDA | `eda.py` | Exploratory data analysis and plots |
-| Tuning | `tune.py` | Optuna hyperparameter optimisation with pruning |
-| Training | `train_bdt.py` / `train_dnn.py` | XGBoost BDT or PyTorch DNN training |
-| Evaluation | `evaluate_bdt.py` / `evaluate_dnn.py` | Metrics, confusion matrices, SHAP, ROC curves |
-| Regions | `regions.py` | ML-based signal/control region analysis |
+| Stage | Command | Description |
+|-------|---------|-------------|
+| Preprocessing | `run.py stage=preprocess` | Selection cuts, event weights, sample merging |
+| Feature Engineering | `run.py stage=feature_engineer` | Derived feature computation |
+| EDA | `run.py stage=eda` | Exploratory data analysis and plots |
+| Tuning | `run.py stage=tune` | Optuna hyperparameter optimisation with pruning |
+| Training | `run.py stage=train` / `stage=train model=dnn` | XGBoost BDT or PyTorch DNN training |
+| Evaluation | `run.py stage=evaluate` / `stage=evaluate model=dnn` | Metrics, confusion matrices, SHAP, ROC curves |
+| Regions | `run.py stage=regions` | ML-based signal/control region analysis |
 
 ## Tech Stack
 
@@ -98,11 +98,11 @@ make evaluate                    # Evaluate BDT
 Start a REST API to serve predictions from a trained model:
 
 ```bash
-# BDT server
-uv run python serve.py --model-type bdt --model-path models/bdt.ubj
+# BDT server (default model)
+uv run python run.py stage=serve
 
-# DNN server with class names
-uv run python serve.py --model-type dnn --model-path models/dnn.pt --class-names background signal
+# DNN server
+uv run python run.py stage=serve model=dnn
 ```
 
 | Endpoint | Method | Description |
@@ -124,12 +124,12 @@ open http://localhost:8000/docs
 
 ### Override config via Hydra CLI
 
-Every script supports Hydra overrides:
+All stages support Hydra overrides via the unified entry point:
 
 ```bash
-uv run python preprocess.py analysis.channel=2 regions@analysis=sr_ch2_compressed
-uv run python train_bdt.py model.n_estimators=5000 seed=42
-uv run python tune.py tuning.n_trials=200 model=dnn
+uv run python run.py stage=preprocess analysis.channel=2 regions@analysis=sr_ch2_compressed
+uv run python run.py stage=train model.n_estimators=5000 seed=42
+uv run python run.py stage=tune tuning.n_trials=200 model=dnn
 ```
 
 ### Experiment tracking
@@ -163,27 +163,19 @@ Configs compose hierarchically — override any parameter from the command line 
 
 ```
 .
+├── run.py                   # Unified entry point (Hydra stage dispatch)
 ├── configs/                 # Hydra YAML configs
 ├── src/
+│   ├── pipelines/           # Pipeline stage orchestration
 │   ├── processing/          # Cuts, merging, I/O, rectangularisation
 │   ├── models/              # BDT, DNN, tuning, evaluation, splits
 │   ├── eda/                 # Exploratory data analysis utilities
 │   ├── regions/             # Signal/control region construction
 │   ├── serving/             # FastAPI inference API
 │   └── visualization/       # Plotting utilities
-├── serve.py                 # Inference server entry point
 ├── tests/                   # pytest suite
 ├── notebooks/               # Analysis notebooks (see below)
 ├── data/                    # Raw and processed data (DVC-tracked)
-├── preprocess.py            # Preprocessing entry point
-├── feature_engineer.py      # Feature engineering entry point
-├── train_bdt.py             # XGBoost training entry point
-├── train_dnn.py             # PyTorch DNN training entry point
-├── tune.py                  # Optuna hyperparameter tuning
-├── evaluate_bdt.py          # BDT evaluation entry point
-├── evaluate_dnn.py          # DNN evaluation entry point
-├── eda.py                   # EDA entry point
-├── regions.py               # Region analysis entry point
 ├── dvc.yaml                 # DVC pipeline definition
 ├── Dockerfile               # Container build
 ├── Makefile                 # Developer workflow

@@ -1,58 +1,45 @@
+"""DNN evaluation pipeline with MLflow experiment tracking."""
+
+from __future__ import annotations
+
 import json
 import logging
 import re
 
-import hydra
-import matplotlib
 import mlflow
 import pyrootutils
 from omegaconf import DictConfig, OmegaConf
 
-matplotlib.use("Agg")
-
-logging.getLogger("mlflow").setLevel(logging.WARNING)
-logging.getLogger("alembic").setLevel(logging.WARNING)
-
-root = pyrootutils.setup_root(
-    search_from=__file__,
-    indicator=[".git", "pyproject.toml"],
-    pythonpath=True,
-    cwd=True,
-)
-
-from src.eda.utils import get_class_labels, get_class_names  # noqa: E402
-from src.models.bdt import load_model  # noqa: E402
-from src.models.evaluation import (  # noqa: E402
-    compute_shap_values,
+from src.eda.utils import get_class_labels, get_class_names
+from src.models.dnn import load_model, resolve_device
+from src.models.evaluation import (
+    compute_dnn_shap_values,
     compute_summary_metrics,
     plot_classification_report,
     plot_confusion_matrix,
-    plot_feature_importance,
+    plot_permutation_importance,
     plot_pr_curves,
     plot_roc_curves,
     plot_score_distributions,
     plot_shap_importance,
 )
-from src.models.splits import prepare_features_target  # noqa: E402
-from src.processing.analysis import get_output_paths  # noqa: E402
-from src.processing.io import load_dataframe  # noqa: E402
-from src.visualization.plots import save_figure  # noqa: E402
+from src.models.splits import prepare_features_target
+from src.processing.analysis import get_output_paths
+from src.processing.io import load_dataframe
+from src.visualization.plots import save_figure
 
 log = logging.getLogger(__name__)
 
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="config")
-def main(cfg: DictConfig) -> None:
-    """Run the full BDT evaluation pipeline with MLflow experiment tracking."""
-    import copy
+def evaluate_dnn(cfg: DictConfig) -> None:
+    """Run the full DNN evaluation pipeline with MLflow experiment tracking."""
+    root = pyrootutils.find_root(indicator=[".git", "pyproject.toml"])
 
-    import numpy as np
-
-    log.info("Starting BDT evaluation:\n%s", OmegaConf.to_yaml(cfg))
+    log.info("Starting DNN evaluation:\n%s", OmegaConf.to_yaml(cfg))
 
     tracking_uri = f"file://{root}/mlruns"
     mlflow.set_tracking_uri(tracking_uri)
-    experiment_name = cfg.get("experiment_name", "tau-supersymmetry-search-baseline")
+    experiment_name = cfg.get("experiment_name", "tau-supersymmetry-search-dnn")
     client = mlflow.tracking.MlflowClient(tracking_uri=tracking_uri)
     experiment = client.get_experiment_by_name(experiment_name)
     latest_runs = client.search_runs(
@@ -67,7 +54,7 @@ def main(cfg: DictConfig) -> None:
         output_paths = get_output_paths(cfg)
         dataframes_dir = root / output_paths["dataframes_dir"]
         models_dir = root / output_paths["models_dir"]
-        plots_dir = root / output_paths["plots_dir"] / "bdt_evaluation"
+        plots_dir = root / output_paths["plots_dir"] / "dnn_evaluation"
         metrics_dir = root / output_paths["dataframes_dir"].parent / "metrics"
         plots_dir.mkdir(parents=True, exist_ok=True)
         metrics_dir.mkdir(parents=True, exist_ok=True)
@@ -80,50 +67,65 @@ def main(cfg: DictConfig) -> None:
         class_labels = get_class_labels(df_mc, display_labels=display_labels)
         log.info("Classes (%d): %s", len(class_names), class_names)
 
+        device = resolve_device()
+
         split_strategy = cfg.pipeline.split_strategy
 
         if split_strategy == "train_test":
-            model = load_model(models_dir / "bdt.ubj")
-            log.info("Loaded model — best iteration: %d", model.best_iteration)
+            model, scaler = load_model(models_dir / "dnn.pt", device=device)
+            log.info("Loaded DNN model on %s", device)
 
         elif split_strategy == "k_fold":
             fold_paths = sorted(
-                models_dir.glob("bdt_fold*.ubj"),
+                models_dir.glob("dnn_fold*.pt"),
                 key=lambda p: int(re.search(r"\d+", p.stem).group()),
             )
-            models = [load_model(p) for p in fold_paths]
+            models_scalers = [load_model(p, device=device) for p in fold_paths]
+            models = [ms[0] for ms in models_scalers]
+            scalers = [ms[1] for ms in models_scalers]
             log.info("Loaded %d fold models", len(models))
 
         else:
             raise ValueError(f"Unknown split_strategy: {split_strategy!r}")
 
-        predictions_df = load_dataframe(dataframes_dir / "bdt_predictions.parquet")
+        predictions_df = load_dataframe(dataframes_dir / "dnn_predictions.parquet")
         y_true = predictions_df["y_true"].to_numpy()
         y_pred = predictions_df["y_pred"].to_numpy()
         y_proba = predictions_df[[f"p_{name}" for name in class_names]].to_numpy()
         log.info("Predictions loaded: %d events", len(predictions_df))
 
-        log.info("Generating feature importance plot...")
-        if split_strategy == "train_test":
-            fi_model = model
-        elif split_strategy == "k_fold":
-            fi_model = copy.copy(models[0])
-            fi_model.feature_importances_ = np.mean(
-                [m.feature_importances_ for m in models], axis=0
-            )
-        feature_names = fi_model.feature_names_in_.tolist()
-        fig = plot_feature_importance(
-            fi_model, feature_names=feature_names, n_features=20
+        log.info("Computing permutation importance...")
+        X, _, _ = prepare_features_target(df_mc)
+        feature_names = X.columns.tolist()
+
+        perm_model = model if split_strategy == "train_test" else models[0]
+        perm_scaler = scaler if split_strategy == "train_test" else scalers[0]
+
+        fig = plot_permutation_importance(
+            perm_model,
+            X,
+            y_true,
+            perm_scaler,
+            device,
+            feature_names=feature_names,
+            n_features=20,
+            seed=cfg.seed,
         )
-        fi_path = plots_dir / "feature_importance.png"
+        fi_path = plots_dir / "permutation_importance.png"
         save_figure(fig, fi_path)
         mlflow.log_artifact(str(fi_path))
 
         log.info("Computing SHAP values (n_samples=2000)...")
-        X, _, _ = prepare_features_target(df_mc)
         shap_model = model if split_strategy == "train_test" else models[0]
-        shap_values, X_sample = compute_shap_values(
-            shap_model, X, n_samples=2000, seed=cfg.seed
+        shap_scaler = scaler if split_strategy == "train_test" else scalers[0]
+
+        shap_values, X_sample = compute_dnn_shap_values(
+            shap_model,
+            X,
+            shap_scaler,
+            device,
+            n_samples=2000,
+            seed=cfg.seed,
         )
         log.info("SHAP computed on %d events", len(X_sample))
 
@@ -140,7 +142,7 @@ def main(cfg: DictConfig) -> None:
         for key, val in metrics.items():
             log.info("  %s: %.4f", key, val)
 
-        metrics_path = metrics_dir / "bdt_metrics.json"
+        metrics_path = metrics_dir / "dnn_metrics.json"
         metrics_path.write_text(json.dumps(metrics, indent=2))
         mlflow.log_artifact(str(metrics_path))
 
@@ -176,7 +178,3 @@ def main(cfg: DictConfig) -> None:
         mlflow.log_artifact(str(sd_path))
 
         log.info("Evaluation complete — plots saved to %s", plots_dir)
-
-
-if __name__ == "__main__":
-    main()
