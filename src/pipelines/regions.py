@@ -10,10 +10,10 @@ from omegaconf import DictConfig, OmegaConf
 
 from src.eda.utils import get_class_labels, get_class_names
 from src.models.splits import (
-    _NON_TRAINING_COLS,
     prepare_features_target,
     train_test_split,
 )
+from src.processing.validation import METADATA_COLUMNS
 from src.processing.analysis import get_output_paths
 from src.processing.io import load_dataframe, save_dataframe
 from src.regions.construction import (
@@ -139,7 +139,7 @@ def regions(cfg: DictConfig) -> None:
     training_features = [
         c
         for c in df_mc.columns
-        if c not in _NON_TRAINING_COLS and df_mc[c].dtype.kind in ("i", "u", "f")
+        if c not in METADATA_COLUMNS and df_mc[c].dtype.kind in ("i", "u", "f")
     ]
     background_display = OmegaConf.to_container(cfg.merge.display_labels, resolve=True)
     kin_cfg = cfg.ml_regions.kinematic_plots
