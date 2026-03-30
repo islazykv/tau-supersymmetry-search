@@ -126,7 +126,7 @@ def plot_signal_score(
         ax.locator_params(nbins=10, axis="y")
     ax.tick_params(axis="both", labelsize=12)
     ax.legend(**_LEGEND_KW)
-    ampl.draw_atlas_label(0.02, 0.97, status="int")
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final")
 
     return fig
 
@@ -186,7 +186,7 @@ def plot_significance_grid(
         ax.set_xlabel(_XLABELS.get(key, "mass [GeV]"), loc="right", fontsize=32)
         ax.set_ylabel(r"$m_{\tilde{\chi}^{0}_{1}}$ [GeV]", loc="top", fontsize=32)
         ax.text(0.22, 0.95, lumi_text, transform=ax.transAxes)
-        ampl.draw_atlas_label(0.02, 0.97, status="int", ax=ax)
+        ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
 
     fig.tight_layout()
     return fig
@@ -377,7 +377,7 @@ def _draw_kinematic_ax(
     )
 
     # ---- ATLAS label & caption ----
-    ampl.draw_atlas_label(0.02, 0.97, status="int", ax=ax_main)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax_main)
     caption = _build_caption(run, region, channel, subject)
     ax_main.text(0.33, 0.85, caption, fontsize=12, transform=ax_main.transAxes)
 

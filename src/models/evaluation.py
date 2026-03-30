@@ -69,7 +69,7 @@ def plot_feature_importance(
     ax.set_xlabel("Importance Score")
     ax.set_title("Feature Importance")
     ax.grid(True, alpha=0.3, axis="x")
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
@@ -110,7 +110,7 @@ def plot_shap_importance(
         show=False,
     )
     fig = plt.gcf()
-    ampl.draw_atlas_label(0.02, 0.97, ax=fig.axes[0])
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=fig.axes[0])
     fig.tight_layout()
     return fig
 
@@ -147,7 +147,7 @@ def plot_confusion_matrix(
     ax.set_xlabel("Predicted Label")
     ax.set_ylabel("True Label")
     ax.set_title("Confusion Matrix")
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
@@ -206,7 +206,7 @@ def plot_classification_report(
     axes[1].set_xlabel("")
     axes[1].set_ylabel("")
 
-    ampl.draw_atlas_label(0.02, 0.97, ax=axes[0])
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=axes[0])
     fig.tight_layout()
     return fig
 
@@ -238,7 +238,7 @@ def plot_roc_curves(
     leg.get_frame().set_edgecolor("black")
     leg.get_frame().set_linewidth(1.0)
     ax.grid(True, alpha=0.3)
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
@@ -267,7 +267,7 @@ def plot_pr_curves(
     leg.get_frame().set_edgecolor("black")
     leg.get_frame().set_linewidth(1.0)
     ax.grid(True, alpha=0.3)
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
@@ -303,7 +303,7 @@ def plot_score_distributions(
         ax.set_title(f"Score Distribution — {label}")
         ax.legend(prop={"size": 8}, labelspacing=0.1, handlelength=1, handleheight=1)
         ax.grid(True, alpha=0.3)
-        ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+        ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
 
     for ax in axes_flat[n:]:
         ax.set_visible(False)
@@ -380,7 +380,7 @@ def plot_permutation_importance(
     ax.set_xlabel("Mean Accuracy Decrease")
     ax.set_title("Permutation Importance")
     ax.grid(True, alpha=0.3, axis="x")
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
