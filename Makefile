@@ -12,39 +12,39 @@ setup:
 	pre-commit install
 
 # --------------------------------------------------------------------------- #
-# Pipeline stages
+# Pipeline stages (unified entry point)
 # --------------------------------------------------------------------------- #
 
 preprocess:
-	uv run python preprocess.py
+	uv run python run.py stage=preprocess
 
 feature-engineer:
-	uv run python feature_engineer.py
+	uv run python run.py stage=feature_engineer
 
 eda:
-	uv run python eda.py
+	uv run python run.py stage=eda
 
 tune:
-	uv run python tune.py
+	uv run python run.py stage=tune
 
 train: train-bdt
 
 train-bdt:
-	uv run python train_bdt.py
+	uv run python run.py stage=train
 
 train-dnn:
-	uv run python train_dnn.py
+	uv run python run.py stage=train model=dnn
 
 evaluate: evaluate-bdt
 
 evaluate-bdt:
-	uv run python evaluate_bdt.py
+	uv run python run.py stage=evaluate
 
 evaluate-dnn:
-	uv run python evaluate_dnn.py
+	uv run python run.py stage=evaluate model=dnn
 
 regions:
-	uv run python regions.py
+	uv run python run.py stage=regions
 
 pipeline: preprocess feature-engineer train evaluate
 
@@ -109,7 +109,7 @@ docker-run:
 # --------------------------------------------------------------------------- #
 
 serve:
-	uv run python serve.py --model-type bdt --model-path $(MODEL_PATH)
+	uv run python run.py stage=serve
 
 serve-dnn:
-	uv run python serve.py --model-type dnn --model-path $(MODEL_PATH)
+	uv run python run.py stage=serve model=dnn

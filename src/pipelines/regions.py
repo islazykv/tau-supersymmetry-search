@@ -1,50 +1,43 @@
+"""ML-based regions analysis pipeline."""
+
+from __future__ import annotations
+
 import logging
 
-import hydra
-import matplotlib
 import matplotlib.pyplot as plt
 import pyrootutils
 from omegaconf import DictConfig, OmegaConf
 
-matplotlib.use("Agg")
-
-root = pyrootutils.setup_root(
-    search_from=__file__,
-    indicator=[".git", "pyproject.toml"],
-    pythonpath=True,
-    cwd=True,
-)
-
-from src.eda.utils import get_class_labels, get_class_names  # noqa: E402
-from src.models.splits import (  # noqa: E402
-    _NON_TRAINING_COLS,
+from src.eda.utils import get_class_labels, get_class_names
+from src.models.splits import (
     prepare_features_target,
     train_test_split,
 )
-from src.processing.analysis import get_output_paths  # noqa: E402
-from src.processing.io import load_dataframe, save_dataframe  # noqa: E402
-from src.regions.construction import (  # noqa: E402
+from src.processing.validation import METADATA_COLUMNS
+from src.processing.analysis import get_output_paths
+from src.processing.io import load_dataframe, save_dataframe
+from src.regions.construction import (
     RegionThresholds,
     build_analysis_frame,
     split_into_regions,
 )
-from src.regions.plots import (  # noqa: E402
+from src.regions.plots import (
     plot_kinematic_distribution,
     plot_signal_score,
     plot_significance_grid,
 )
-from src.regions.significance import (  # noqa: E402
+from src.regions.significance import (
     compute_significance_grid,
     construct_grid,
 )
-from src.visualization.plots import save_figure  # noqa: E402
+from src.visualization.plots import save_figure
 
 log = logging.getLogger(__name__)
 
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="config")
-def main(cfg: DictConfig) -> None:
+def regions(cfg: DictConfig) -> None:
     """Run the full ML-based regions analysis pipeline."""
+    root = pyrootutils.find_root(indicator=[".git", "pyproject.toml"])
 
     log.info("Starting regions analysis:\n%s", OmegaConf.to_yaml(cfg))
 
@@ -99,7 +92,7 @@ def main(cfg: DictConfig) -> None:
         validation=t.validation,
         signal=t.signal,
     )
-    regions = split_into_regions(analysis_df, thresholds)
+    regions_dict = split_into_regions(analysis_df, thresholds)
 
     score_cfg = cfg.ml_regions.score_plots
     threshold_tuple = (t.control, t.validation, t.signal)
@@ -125,7 +118,7 @@ def main(cfg: DictConfig) -> None:
         OmegaConf.to_container(cfg.merge.primary_groups, resolve=True).keys()
     )
     sig_results = compute_significance_grid(
-        sr_df=regions["SR"],
+        sr_df=regions_dict["SR"],
         signal_threshold=t.signal,
         background_names=background_names,
         bins=cfg.ml_regions.significance.bins,
@@ -146,13 +139,13 @@ def main(cfg: DictConfig) -> None:
     training_features = [
         c
         for c in df_mc.columns
-        if c not in _NON_TRAINING_COLS and df_mc[c].dtype.kind in ("i", "u", "f")
+        if c not in METADATA_COLUMNS and df_mc[c].dtype.kind in ("i", "u", "f")
     ]
     background_display = OmegaConf.to_container(cfg.merge.display_labels, resolve=True)
     kin_cfg = cfg.ml_regions.kinematic_plots
     include_signal = kin_cfg.include_signal
 
-    for region_name, region_df in regions.items():
+    for region_name, region_df in regions_dict.items():
         bkg_dfs = {}
         for i, bkg_name in enumerate(background_names):
             mask = region_df["y_true"] == i
@@ -199,14 +192,10 @@ def main(cfg: DictConfig) -> None:
 
         log.info("Kinematic distributions for %s saved.", region_name)
 
-    for region_name, region_df in regions.items():
+    for region_name, region_df in regions_dict.items():
         save_dataframe(
             region_df,
             dataframes_dir / f"{model_type}_{region_name.lower()}.parquet",
         )
 
     log.info("Regions analysis complete — plots saved to %s", plots_dir)
-
-
-if __name__ == "__main__":
-    main()

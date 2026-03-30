@@ -1,43 +1,36 @@
+"""Exploratory data analysis pipeline: load, check, and plot."""
+
+from __future__ import annotations
+
 import logging
 
-import hydra
-import matplotlib
 import pyrootutils
 from omegaconf import DictConfig, OmegaConf
 
-matplotlib.use("Agg")
-
-pyrootutils.setup_root(
-    search_from=__file__,
-    indicator=[".git", "pyproject.toml"],
-    pythonpath=True,
-    cwd=True,
-)
-
-from src.eda.checks import (  # noqa: E402
+from src.eda.checks import (
     summarize_feature_ranges,
     summarize_missing,
 )
-from src.eda.plots import (  # noqa: E402
+from src.eda.plots import (
     plot_class_balance,
     plot_correlation_matrix,
     plot_feature_distributions,
 )
-from src.eda.utils import get_class_labels, get_class_names  # noqa: E402
-from src.processing.analysis import get_output_paths  # noqa: E402
-from src.processing.io import load_dataframe  # noqa: E402
-from src.processing.validation import METADATA_COLUMNS  # noqa: E402
-from src.visualization.plots import save_figure  # noqa: E402
+from src.eda.utils import get_class_labels, get_class_names
+from src.processing.analysis import get_output_paths
+from src.processing.io import load_dataframe
+from src.processing.validation import METADATA_COLUMNS
+from src.visualization.plots import save_figure
 
 log = logging.getLogger(__name__)
 
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="config")
-def main(cfg: DictConfig):
+def eda(cfg: DictConfig) -> None:
     """Run the full EDA pipeline: load, check data quality, and save plots."""
+    root = pyrootutils.find_root(indicator=[".git", "pyproject.toml"])
     output_paths = get_output_paths(cfg)
-    dataframes_dir = output_paths["dataframes_dir"]
-    plots_dir = output_paths["plots_dir"] / "eda"
+    dataframes_dir = root / output_paths["dataframes_dir"]
+    plots_dir = root / output_paths["plots_dir"] / "eda"
     plots_dir.mkdir(parents=True, exist_ok=True)
 
     df_mc = load_dataframe(dataframes_dir / "mc.parquet")
@@ -80,7 +73,3 @@ def main(cfg: DictConfig):
     save_figure(fig, plots_dir / "feature_distributions.png")
 
     log.info("EDA complete — plots saved to %s", plots_dir)
-
-
-if __name__ == "__main__":
-    main()

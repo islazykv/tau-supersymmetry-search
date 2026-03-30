@@ -40,7 +40,7 @@ def plot_class_balance(
     axes[0].set_ylabel("Event count")
     axes[0].set_title("Unweighted Countplot")
     axes[0].ticklabel_format(axis="y", style="plain")
-    ampl.draw_atlas_label(0.05, 0.97, ax=axes[0])
+    ampl.draw_atlas_label(0.05, 0.97, simulation=True, status="final", ax=axes[0])
 
     if has_weights:
         weighted = df.groupby("class")["class_weight"].sum().reindex(class_order)
@@ -51,7 +51,7 @@ def plot_class_balance(
         axes[1].set_ylabel("Event count")
         axes[1].set_title("Weighted Countplot")
         axes[1].ticklabel_format(axis="y", style="plain")
-        ampl.draw_atlas_label(0.05, 0.97, ax=axes[1])
+        ampl.draw_atlas_label(0.05, 0.97, simulation=True, status="final", ax=axes[1])
 
     plt.subplots_adjust(wspace=0.2)
     return fig

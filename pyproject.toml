@@ -107,5 +107,12 @@ module = [
 ]
 disable_error_code = ["arg-type", "attr-defined", "index", "union-attr"]
 
+# Pipeline orchestration modules use OmegaConf.to_container(), MLflow APIs,
+# and regex match groups — same Hydra/OmegaConf type-narrowing patterns as
+# the modules above. Runtime validation is handled by Hydra and MLflow.
+[[tool.mypy.overrides]]
+module = ["src.pipelines.*"]
+disable_error_code = ["union-attr", "arg-type", "misc"]
+
 [tool.ruff]
 extend-exclude = ["notebooks/*.ipynb"]

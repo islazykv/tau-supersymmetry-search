@@ -37,7 +37,7 @@ def plot_training_curves(
     ax.set_title("Loss Plot")
     ax.legend(**_LEGEND_KW)
     ax.grid(True, alpha=0.3)
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
@@ -84,7 +84,7 @@ def plot_kfold_training_curves(
     ax.set_title("Loss Plot")
     ax.legend(**_LEGEND_KW)
     ax.grid(True, alpha=0.3)
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
@@ -112,7 +112,7 @@ def plot_dnn_training_curves(
     ax.set_title("Loss Plot")
     ax.legend(**_LEGEND_KW)
     ax.grid(True, alpha=0.3)
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
@@ -157,6 +157,6 @@ def plot_dnn_kfold_training_curves(
     ax.set_title("Loss Plot")
     ax.legend(**_LEGEND_KW)
     ax.grid(True, alpha=0.3)
-    ampl.draw_atlas_label(0.02, 0.97, ax=ax)
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig

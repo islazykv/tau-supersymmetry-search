@@ -1,42 +1,33 @@
+"""Hyperparameter tuning pipeline with Optuna and MLflow."""
+
+from __future__ import annotations
+
 import logging
 
-import hydra
-import matplotlib
 import mlflow
 import optuna
 import pyrootutils
 from omegaconf import DictConfig, OmegaConf
 
-matplotlib.use("Agg")
-
-logging.getLogger("mlflow").setLevel(logging.WARNING)
-logging.getLogger("alembic").setLevel(logging.WARNING)
-
-root = pyrootutils.setup_root(
-    search_from=__file__,
-    indicator=[".git", "pyproject.toml"],
-    pythonpath=True,
-    cwd=True,
-)
-
-from src.models.dnn import resolve_device  # noqa: E402
-from src.models.splits import kfold_split, prepare_features_target  # noqa: E402
-from src.models.tuning import (  # noqa: E402
+from src.eda.utils import get_class_names
+from src.models.dnn import resolve_device
+from src.models.splits import kfold_split, prepare_features_target
+from src.models.tuning import (
     bdt_objective,
     create_study,
     dnn_objective,
     export_best_params,
 )
-from src.eda.utils import get_class_names  # noqa: E402
-from src.processing.analysis import get_output_paths  # noqa: E402
-from src.processing.io import load_dataframe  # noqa: E402
+from src.processing.analysis import get_output_paths
+from src.processing.io import load_dataframe
 
 log = logging.getLogger(__name__)
 
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="config")
-def main(cfg: DictConfig) -> None:
+def tune(cfg: DictConfig) -> None:
     """Run Optuna hyperparameter tuning with k-fold CV and MLflow tracking."""
+    root = pyrootutils.find_root(indicator=[".git", "pyproject.toml"])
+
     log.info("Starting hyperparameter tuning:\n%s", OmegaConf.to_yaml(cfg))
 
     mlflow.set_tracking_uri(f"file://{root}/mlruns")
@@ -143,7 +134,3 @@ def main(cfg: DictConfig) -> None:
         mlflow.log_artifact(str(storage_path))
 
         log.info("Tuning complete — results saved to %s", models_dir)
-
-
-if __name__ == "__main__":
-    main()
