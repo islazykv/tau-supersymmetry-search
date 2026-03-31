@@ -9,11 +9,7 @@ _DEFAULT_SIGNAL_TYPE_NAMES: dict[str, str] = {
 
 
 def get_class_names(df: pd.DataFrame) -> list[str]:
-    """Derive ordered internal class names from eventOrigin.
-
-    Returns the eventOrigin key for single-origin classes (backgrounds) and
-    'signal' for multi-origin classes (merged signal).
-    """
+    """Derive ordered internal class names from eventOrigin."""
     class_names: list[str] = []
     for _cls, group in df.groupby("class", sort=True):
         origins = group["eventOrigin"].unique()
@@ -26,11 +22,7 @@ def get_class_labels(
     display_labels: dict[str, str] | None = None,
     signal_type_names: dict[str, str] | None = None,
 ) -> list[str]:
-    """Derive ordered class display labels from eventOrigin.
-
-    Applies display_labels for background groups and prefix matching for merged
-    signal classes.
-    """
+    """Derive ordered display labels from eventOrigin."""
     if signal_type_names is None:
         signal_type_names = _DEFAULT_SIGNAL_TYPE_NAMES
     if display_labels is None:

@@ -22,17 +22,7 @@ log = logging.getLogger(__name__)
 
 
 class DNNClassifier(nn.Module):
-    """Configurable fully-connected classifier.
-
-    Architecture::
-
-        input → Linear → Activation → Dropout
-              → Linear → Activation → Dropout   (repeated for each hidden layer)
-              → Linear(output)
-
-    The output layer produces raw logits (no softmax) because
-    ``CrossEntropyLoss`` combines ``LogSoftmax`` and ``NLLLoss`` internally.
-    """
+    """Configurable fully-connected classifier producing raw logits."""
 
     def __init__(
         self,
@@ -42,6 +32,7 @@ class DNNClassifier(nn.Module):
         activation: str = "ReLU",
         dropout: float = 0.0,
     ) -> None:
+        """Build the backbone and classification head from the given architecture config."""
         super().__init__()
 
         self.config: dict = {
@@ -67,6 +58,7 @@ class DNNClassifier(nn.Module):
         self.head = nn.Linear(in_dim, n_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Pass input through the backbone and classification head."""
         return self.head(self.backbone(x))
 
 
@@ -83,7 +75,7 @@ def build_model(
     n_features: int,
     n_classes: int,
 ) -> DNNClassifier:
-    """Construct a :class:`DNNClassifier` from the Hydra model config."""
+    """Construct a DNNClassifier from the Hydra model config."""
     mcfg = OmegaConf.to_container(cfg.model, resolve=True)
     return DNNClassifier(
         n_features=n_features,
@@ -105,7 +97,7 @@ def build_criterion(
     class_weights: np.ndarray | None = None,
     device: torch.device = torch.device("cpu"),
 ) -> nn.CrossEntropyLoss:
-    """``CrossEntropyLoss`` with optional per-class weights on *device*."""
+    """Build CrossEntropyLoss with optional per-class weights on the given device."""
     weight = None
     if class_weights is not None:
         weight = torch.tensor(class_weights, dtype=torch.float32, device=device)
@@ -115,7 +107,7 @@ def build_criterion(
 def _batch_indices(
     n: int, batch_size: int, shuffle: bool, generator: torch.Generator | None = None
 ):
-    """Yield (start, end) index pairs for mini-batching a GPU tensor."""
+    """Yield index slices for mini-batching a GPU tensor."""
     if shuffle:
         idx = torch.randperm(n, generator=generator)
     else:
@@ -137,36 +129,7 @@ def train(
     early_stopping_rounds: int = 50,
     verbose: bool = True,
 ) -> tuple[DNNClassifier, dict]:
-    """Train a DNN with mini-batch SGD, AMP, and early stopping.
-
-    Parameters
-    ----------
-    model : DNNClassifier
-        Model already on *device*.
-    criterion : nn.CrossEntropyLoss
-        Loss function (with class weights already on *device*).
-    X_train, y_train : pd.DataFrame / pd.Series
-        Training features and labels.
-    X_val, y_val : pd.DataFrame / pd.Series
-        Validation features and labels.
-    scaler : MinMaxScaler
-        Fitted scaler (applied to both train and val features).
-    cfg : DictConfig
-        Full Hydra config — reads ``cfg.model`` and ``cfg.seed``.
-    device : torch.device
-        Training device.
-    early_stopping_rounds : int
-        Patience for early stopping on the validation loss.
-    verbose : bool
-        Whether to display a tqdm progress bar.
-
-    Returns
-    -------
-    model : DNNClassifier
-        Model with the best weights restored.
-    history : dict
-        ``{"train_loss": [...], "val_loss": [...], "best_epoch": int}``.
-    """
+    """Train a DNN with mini-batch SGD, AMP, and early stopping."""
     mcfg = OmegaConf.to_container(cfg.model, resolve=True)
     n_epochs: int = mcfg["n_epochs"]
     batch_size: int = mcfg["batch_size"]
@@ -284,17 +247,7 @@ def train_kfold(
     pd.Series,
     list[dict],
 ]:
-    """Train one DNN per fold and return out-of-fold (OOF) predictions.
-
-    Returns
-    -------
-    models : list[DNNClassifier]
-    scalers : list[MinMaxScaler]
-    y_pred_oof : np.ndarray
-    y_proba_oof : np.ndarray
-    y_test_oof : pd.Series
-    fold_histories : list[dict]
-    """
+    """Train one DNN per fold and return out-of-fold predictions."""
     models: list[DNNClassifier] = []
     scalers: list[MinMaxScaler] = []
     y_preds: list[np.ndarray] = []
@@ -362,28 +315,7 @@ def predict(
     device: torch.device,
     batch_size: int = 1024,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return hard predictions and probability scores for *X*.
-
-    Parameters
-    ----------
-    model : DNNClassifier
-        Trained model.
-    X : pd.DataFrame
-        Raw input features (pre-scaling).
-    scaler : MinMaxScaler
-        Fitted scaler.
-    device : torch.device
-        Inference device.
-    batch_size : int
-        Mini-batch size for inference.
-
-    Returns
-    -------
-    y_pred : np.ndarray, shape (n_samples,)
-        Argmax class indices.
-    y_proba : np.ndarray, shape (n_samples, n_classes)
-        Per-class probability estimates (softmax of logits).
-    """
+    """Return hard predictions and probability scores for the given features."""
     model.eval()
     X_t = torch.tensor(scaler.transform(X.values), dtype=torch.float32, device=device)
 
@@ -399,12 +331,7 @@ def predict(
 
 
 def save_model(model: DNNClassifier, scaler: MinMaxScaler, path: Path) -> None:
-    """Save model state_dict, model config, and fitted scaler to a ``.pt`` file.
-
-    The checkpoint is self-contained: loading it with :func:`load_model`
-    reconstructs the model architecture from the stored config and restores
-    both the weights and the scaler.
-    """
+    """Save model weights, config, and fitted scaler to a checkpoint."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
@@ -423,7 +350,7 @@ def load_model(
     path: Path,
     device: torch.device = torch.device("cpu"),
 ) -> tuple[DNNClassifier, MinMaxScaler]:
-    """Load model and scaler from a ``.pt`` checkpoint and companion ``.scaler`` file."""
+    """Load model and scaler from a checkpoint and companion scaler file."""
     path = Path(path)
     checkpoint = torch.load(str(path), map_location=device, weights_only=True)
     model = DNNClassifier(**checkpoint["model_config"])

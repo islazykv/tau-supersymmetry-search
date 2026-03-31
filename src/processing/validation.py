@@ -13,11 +13,7 @@ METADATA_COLUMNS = {"class", "class_weight", "eventOrigin", "tau_n", "weight"}
 
 
 def _build_mc_schema(df: pd.DataFrame) -> pa.DataFrameSchema:
-    """Build a DataFrameSchema for the MC DataFrame.
-
-    The schema validates fixed metadata columns with strict checks and
-    dynamically validates all remaining columns as numeric training features.
-    """
+    """Build a pandera DataFrameSchema for the MC DataFrame."""
     columns: dict[str, pa.Column] = {
         "class": pa.Column(int, pa.Check.ge(0), nullable=False),
         "class_weight": pa.Column(float, pa.Check.gt(0), nullable=False),
@@ -59,17 +55,7 @@ def _build_mc_schema(df: pd.DataFrame) -> pa.DataFrameSchema:
 
 
 def validate_mc(df: pd.DataFrame) -> pd.DataFrame:
-    """Validate the MC DataFrame against the expected schema.
-
-    Args:
-        df: The MC DataFrame produced by feature engineering.
-
-    Returns:
-        The validated DataFrame (unchanged if valid).
-
-    Raises:
-        pandera.errors.SchemaError: If validation fails.
-    """
+    """Validate the MC DataFrame against the expected schema."""
     feature_cols = set(df.columns) - METADATA_COLUMNS
     if len(feature_cols) == 0:
         raise pa.errors.SchemaError(

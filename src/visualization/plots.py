@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 def apply_atlas_style():
-    """Apply the ATLAS style and LaTeX compatibility."""
+    """Apply the ATLAS matplotlib style with LaTeX if available."""
 
     cvmfs_path = "/cvmfs/sft.cern.ch/lcg/external/texlive/2020/bin/x86_64-linux"
     if os.path.exists(cvmfs_path):

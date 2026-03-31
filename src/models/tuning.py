@@ -1,11 +1,4 @@
-"""Optuna-based hyperparameter tuning for BDT (XGBoost) and DNN (PyTorch) models.
-
-This module provides:
-- Declarative parameter suggestion from YAML search-space configs
-- K-fold CV objectives with Optuna pruning for both model types
-- SQLite-backed study persistence for resumability
-- Best-params export as Hydra-compatible YAML model configs
-"""
+"""Optuna-based hyperparameter tuning for BDT and DNN models."""
 
 from __future__ import annotations
 
@@ -42,19 +35,7 @@ def suggest_params(
 ) -> dict:
     """Suggest parameters from a declarative YAML search-space config.
 
-    Parameters
-    ----------
-    trial : optuna.Trial
-        Current Optuna trial.
-    search_space : dict
-        Search space dict for the target model (e.g. ``cfg.tuning.search_space.xgboost``).
-    model_name : str
-        Model identifier (for logging).
-
-    Returns
-    -------
-    dict
-        Suggested parameter values keyed by parameter name.
+    Search-space types: float, int, categorical.
     """
     params = {}
     for name, spec in search_space.items():
@@ -82,13 +63,7 @@ def bdt_objective(
     folds: list[tuple],
     n_classes: int,
 ) -> float:
-    """XGBoost k-fold CV objective with per-round and cross-fold pruning.
-
-    Returns
-    -------
-    float
-        Mean validation log-loss across folds.
-    """
+    """XGBoost k-fold CV objective with per-round and cross-fold pruning."""
     search_space = OmegaConf.to_container(cfg.tuning.search_space.xgboost, resolve=True)
     suggested = suggest_params(trial, search_space, "xgboost")
 
@@ -136,13 +111,7 @@ def dnn_objective(
     n_classes: int,
     device: torch.device,
 ) -> float:
-    """DNN k-fold CV objective with epoch-level pruning.
-
-    Returns
-    -------
-    float
-        Mean best validation loss across folds.
-    """
+    """DNN k-fold CV objective with epoch-level pruning."""
     search_space = OmegaConf.to_container(cfg.tuning.search_space.dnn, resolve=True)
     suggested = suggest_params(trial, search_space, "dnn")
 
@@ -210,17 +179,7 @@ def _train_dnn_with_pruning(
     device: torch.device,
     seed: int,
 ) -> float:
-    """Train a DNN for one fold with Optuna epoch-level pruning.
-
-    This is an inlined training loop (mirrors dnn.py:188-290) with pruning
-    hooks injected. Kept separate from dnn.train() to avoid modifying the
-    stable production training path.
-
-    Returns
-    -------
-    float
-        Best validation loss for this fold.
-    """
+    """Train a DNN for one fold with Optuna epoch-level pruning."""
     model = DNNClassifier(
         n_features=n_features,
         n_classes=n_classes,
@@ -299,17 +258,8 @@ def _train_dnn_with_pruning(
 def create_study(cfg: DictConfig, storage_path: Path) -> optuna.Study:
     """Create or load an Optuna study with SQLite persistence.
 
-    Parameters
-    ----------
-    cfg : DictConfig
-        Full Hydra config — reads ``cfg.tuning``.
-    storage_path : Path
-        Path for the SQLite database file.
-
-    Returns
-    -------
-    optuna.Study
-        Ready-to-optimize study (resumes if the DB already exists).
+    Samplers: TPESampler, RandomSampler.
+    Pruners: MedianPruner, NopPruner.
     """
     storage_path = Path(storage_path)
     storage_path.parent.mkdir(parents=True, exist_ok=True)
@@ -358,26 +308,7 @@ def export_best_params(
     base_model_cfg: DictConfig,
     output_path: Path,
 ) -> Path:
-    """Export the best trial's params as a Hydra-compatible YAML model config.
-
-    For DNN, reconstructs ``hidden_sizes`` from ``n_layers`` + ``layer_size``.
-
-    Parameters
-    ----------
-    study : optuna.Study
-        Completed study.
-    model_name : str
-        ``"xgboost"`` or ``"pytorch_dnn"``.
-    base_model_cfg : DictConfig
-        Base model config to merge best params into.
-    output_path : Path
-        Where to write the YAML file.
-
-    Returns
-    -------
-    Path
-        Path to the written YAML file.
-    """
+    """Export the best trial's params as a Hydra-compatible YAML model config."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

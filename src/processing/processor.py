@@ -19,14 +19,7 @@ def _resolve_path(
     campaign: str,
     sample_id: str,
 ) -> str:
-    """Format the ROOT file path from the paths config.
-
-    Args:
-        cfg: Hydra DictConfig with 'paths' and 'analysis' sections.
-        sample_type: Category key in paths config (e.g. 'background').
-        campaign: MC campaign identifier (e.g. 'mc20a').
-        sample_id: Sample identifier used to fill the path template.
-    """
+    """Format the ROOT file path from the sample type, campaign, and sample ID."""
     template = cfg.paths[sample_type]
     return template.format(
         analysis_base=cfg.analysis.analysis_base,
@@ -36,11 +29,7 @@ def _resolve_path(
 
 
 def _ntau_from_channel(channel: str) -> str:
-    """Map a channel string to its expected tau multiplicity string.
-
-    Args:
-        channel: Analysis channel (e.g. '0', '1', '1had0lep', '1had1lep', '2').
-    """
+    """Map a channel string to its expected tau multiplicity."""
     if channel == "2":
         return "2"
     if channel in ("1had0lep", "1had1lep", "1"):
@@ -54,14 +43,7 @@ def _ntau_from_channel(channel: str) -> str:
 
 
 def _apply_channel_cuts(ar: ak.Array, channel: str, ntau: str, region: str) -> ak.Array:
-    """Apply tau multiplicity and lepton-veto cuts.
-
-    Args:
-        ar: Input awkward array of events.
-        channel: Analysis channel string.
-        ntau: Expected tau multiplicity ('0', '1', or '2').
-        region: Analysis region (e.g. 'SR', 'CR').
-    """
+    """Apply tau multiplicity and lepton-veto cuts."""
     if region != "CR":
         if ntau == "0":
             ar = ar[ar.tau_n == 0]
@@ -80,11 +62,7 @@ def _apply_channel_cuts(ar: ak.Array, channel: str, ntau: str, region: str) -> a
 
 
 def _apply_cleaning_cuts(ar: ak.Array) -> ak.Array:
-    """Apply event quality and MET trigger cleaning cuts.
-
-    Args:
-        ar: Input awkward array of events.
-    """
+    """Apply event quality and MET trigger cleaning cuts."""
     ar = ar[ar.eventClean != 0]
     ar = ar[ar.isBadTile == 0]
     ar = ar[ar.jet_isBadTight[:, 0] != True]  # noqa: E712
@@ -93,12 +71,7 @@ def _apply_cleaning_cuts(ar: ak.Array) -> ak.Array:
 
 
 def _apply_rnn_cuts(ar: ak.Array, ntau: str) -> ak.Array:
-    """Apply tau RNN medium working point cuts for the given tau multiplicity.
-
-    Args:
-        ar: Input awkward array of events.
-        ntau: Expected tau multiplicity ('1' or '2').
-    """
+    """Apply tau RNN medium working point cuts for the given tau multiplicity."""
     if ntau == "1":
         ar = ar[ar.tau_JetRNNMedium[:, 0] != 0]
     elif ntau == "2":
@@ -113,14 +86,7 @@ def _apply_truth_cuts(
     sample_type: str,
     scope: str,
 ) -> ak.Array:
-    """Apply truth-matching cuts for background samples outside the NTuples scope.
-
-    Args:
-        ar: Input awkward array of events.
-        ntau: Expected tau multiplicity ('1' or '2').
-        sample_type: Sample category (e.g. 'background', 'signal').
-        scope: Analysis scope (e.g. 'NTuples', 'ML', 'CC').
-    """
+    """Apply truth-matching cuts for background samples outside the NTuples scope."""
     if scope == "NTuples":
         return ar
 
@@ -128,13 +94,7 @@ def _apply_truth_cuts(
 
 
 def _apply_kinematic_cuts(ar: ak.Array, scope: str, subject: str | None) -> ak.Array:
-    """Apply kinematic selection cuts on jets, MET, and angular variables.
-
-    Args:
-        ar: Input awkward array of events.
-        scope: Analysis scope (e.g. 'NTuples', 'ML', 'CC').
-        subject: Analysis subject (e.g. 'QCD'), or None.
-    """
+    """Apply kinematic selection cuts on jets, MET, and angular variables."""
     ar = ar[ar.jet_n >= 2]
     ar = ar[ar.met / 1000 >= 200]
     ar = ar[ar.jet_pt[:, 0] / 1000 >= 120]
@@ -162,16 +122,7 @@ def _apply_region_cuts(
     subject: str | None,
     sub_subject: str | None,
 ) -> ak.Array:
-    """Dispatch to SR or CR cut functions based on the analysis region.
-
-    Args:
-        ar: Input awkward array of events.
-        region: Analysis region ('SR', 'CR', or None for preselection).
-        channel: Analysis channel string.
-        ntau: Expected tau multiplicity.
-        subject: Analysis subject, or None.
-        sub_subject: Analysis sub-subject, or None.
-    """
+    """Dispatch to SR or CR cut functions based on the analysis region."""
     if region == "SR":
         ar = _apply_sr_cuts(ar, channel, ntau, subject)
     elif region == "CR":
@@ -186,14 +137,7 @@ def _apply_sr_cuts(
     ntau: str,
     subject: str | None,
 ) -> ak.Array:
-    """Apply signal region cuts based on channel and subject.
-
-    Args:
-        ar: Input awkward array of events.
-        channel: Analysis channel string.
-        ntau: Expected tau multiplicity.
-        subject: SR subject (e.g. 'compressed', 'medium-mass', 'high-mass').
-    """
+    """Apply signal region cuts based on channel and subject."""
     if ntau == "1":
         if subject == "compressed":
             ar = ar[ar.tau_pt[:, 0] / 1000 < 45]
@@ -231,14 +175,7 @@ def _apply_cr_cuts(
     subject: str | None,
     sub_subject: str | None,
 ) -> ak.Array:
-    """Apply control region cuts based on subject and sub-subject.
-
-    Args:
-        ar: Input awkward array of events.
-        channel: Analysis channel string.
-        subject: CR subject (e.g. 'W(taunu)', 'top', 'Z(nunu)', 'QCD').
-        sub_subject: CR sub-subject (e.g. 'kinematic', 'true-tau', 'fake-tau').
-    """
+    """Apply control region cuts based on subject and sub-subject."""
     if subject in ("W(taunu)", "top"):
         if subject == "W(taunu)":
             ar = ar[ar.jet_n_btag == 0]
@@ -301,11 +238,7 @@ def _apply_cr_cuts(
 
 
 def _compute_weight(ar: ak.Array) -> ak.Array:
-    """Compute and assign the combined event weight from all weight components.
-
-    Args:
-        ar: Input awkward array of events with individual weight fields.
-    """
+    """Compute and assign the combined event weight from all weight components."""
     ar["weight"] = (
         ar.lumiweight
         * ar.mcEventWeight
@@ -324,13 +257,7 @@ def process_samples(
     sample_type: str,
     sample_ids: list[str],
 ) -> dict[str, ak.Array]:
-    """Read ROOT files, apply selection cuts and weights, and return processed arrays.
-
-    Args:
-        cfg: Hydra DictConfig with full analysis configuration.
-        sample_type: Category key (e.g. 'background', 'signal', 'data').
-        sample_ids: List of sample IDs to process.
-    """
+    """Read ROOT files, apply selection cuts and weights, and return processed arrays."""
     scope = cfg.analysis.scope
     channel = str(cfg.analysis.channel) if cfg.analysis.channel is not None else "1"
     region = cfg.analysis.get("region")

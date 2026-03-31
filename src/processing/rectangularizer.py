@@ -11,13 +11,7 @@ def rectangularize_pad_array(
     padding_threshold: int,
     nan_threshold: float = 0.0,
 ) -> pd.DataFrame:
-    """Pad jagged features to a fixed depth and return a rectangular DataFrame.
-
-    Args:
-        array_in: Input awkward array with potentially jagged fields.
-        padding_threshold: Maximum number of entries to pad jagged features to.
-        nan_threshold: Minimum fraction of non-NaN values to keep a column.
-    """
+    """Pad jagged features to a fixed depth and return a rectangular DataFrame."""
     jagged_features = []
     for feature in ak.fields(array_in):
         try:
@@ -45,9 +39,11 @@ def fill_padding(
 ) -> pd.DataFrame:
     """Replace NaN padding values in a DataFrame using the specified strategy.
 
-    Args:
-        df: Input DataFrame with potential NaN values.
-        strategy: Fill method — 'NaN' (keep), '0', '-999', or 'mean'.
+    Strategies:
+        NaN  -- keep NaN values unchanged.
+        0    -- fill with zeros.
+        -999 -- fill with -999 sentinel value.
+        mean -- fill with per-column numeric mean.
     """
     if strategy == "NaN":
         return df

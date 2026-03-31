@@ -19,13 +19,15 @@ _BINARY_METRIC = "logloss"
 
 
 class _TqdmCallback(xgb.callback.TrainingCallback):
-    """Updates a pre-created tqdm bar after each boosting round."""
+    """Update a tqdm progress bar after each boosting round."""
 
     def __init__(self, bar: tqdm) -> None:
+        """Initialize with a tqdm progress bar instance."""
         super().__init__()
         self._bar = bar
 
     def after_iteration(self, model, epoch, evals_log):
+        """Post metrics and advance the progress bar by one round."""
         postfix = {}
         for name, metrics in evals_log.items():
             tag = "train" if name == "validation_0" else "val"
@@ -36,27 +38,12 @@ class _TqdmCallback(xgb.callback.TrainingCallback):
         return False
 
     def after_training(self, model):
+        """Return the model unchanged after training completes."""
         return model
 
 
 def build_params(cfg: DictConfig, n_classes: int) -> dict:
-    """Build XGBoost constructor kwargs from the Hydra model config.
-
-    Reads all keys from ``cfg.model`` (excluding ``name``), then injects the
-    correct objective and eval metric based on the number of classes.
-
-    Parameters
-    ----------
-    cfg : DictConfig
-        Full Hydra config object.
-    n_classes : int
-        Number of unique class labels in the dataset.
-
-    Returns
-    -------
-    dict
-        Keyword arguments ready to be unpacked into ``xgb.XGBClassifier``.
-    """
+    """Build XGBoost constructor kwargs from the Hydra model config."""
     params: dict = {
         k: v
         for k, v in OmegaConf.to_container(cfg.model, resolve=True).items()
@@ -84,33 +71,7 @@ def train(
     early_stopping_rounds: int = 50,
     verbose: bool = True,
 ) -> xgb.XGBClassifier:
-    """Train an XGBoost classifier with early stopping on the validation set.
-
-    Both the training set and the validation set are passed as eval sets so
-    that ``evals_result_`` contains curves for both.  XGBoost monitors only
-    the *last* entry in ``eval_set`` for early stopping, which is the
-    validation set.
-
-    Parameters
-    ----------
-    params : dict
-        XGBoost constructor kwargs produced by :func:`build_params`.
-    X_train, y_train : pd.DataFrame / pd.Series
-        Training features and labels.
-    X_val, y_val : pd.DataFrame / pd.Series
-        Validation features and labels (used for early stopping).
-    w_train : pd.Series, optional
-        Per-event sample weights for class imbalance correction.
-    early_stopping_rounds : int
-        Stop training if validation metric does not improve for this many
-        consecutive rounds.
-
-    Returns
-    -------
-    xgb.XGBClassifier
-        Fitted model.  ``model.best_iteration`` holds the optimal number of
-        trees; predictions automatically use this limit.
-    """
+    """Train an XGBoost classifier with early stopping on the validation set."""
     model = xgb.XGBClassifier(
         **params,
         early_stopping_rounds=early_stopping_rounds,
@@ -151,31 +112,7 @@ def train_kfold(
     early_stopping_rounds: int = 50,
     verbose: bool = True,
 ) -> tuple[list[xgb.XGBClassifier], np.ndarray, np.ndarray, pd.Series]:
-    """Train one model per fold and return out-of-fold (OOF) predictions.
-
-    Each fold's test set is non-overlapping, so concatenating OOF predictions
-    gives full-dataset coverage — a robust, unbiased estimate of generalisation.
-
-    Parameters
-    ----------
-    params : dict
-        XGBoost constructor kwargs produced by :func:`build_params`.
-    folds : list of tuples
-        Output of :func:`~src.models.splits.kfold_split`.
-    early_stopping_rounds : int
-        Passed to each fold's :func:`train` call.
-
-    Returns
-    -------
-    models : list[xgb.XGBClassifier]
-        One fitted model per fold.
-    y_pred_oof : np.ndarray, shape (n_samples,)
-        Concatenated hard predictions over all folds.
-    y_proba_oof : np.ndarray, shape (n_samples, n_classes)
-        Concatenated probability scores over all folds.
-    y_test_oof : pd.Series
-        Concatenated true labels over all folds (same row order as predictions).
-    """
+    """Train one model per fold and return out-of-fold predictions."""
     models: list[xgb.XGBClassifier] = []
     y_preds: list[np.ndarray] = []
     y_probas: list[np.ndarray] = []
@@ -214,15 +151,7 @@ def train_kfold(
 
 
 def get_evals_result(model: xgb.XGBClassifier) -> dict[str, dict[str, list[float]]]:
-    """Return the per-iteration evaluation results stored on the fitted model.
-
-    The returned dict has the shape::
-
-        {
-            "validation_0": {"<metric>": [v0, v1, ...]},  # train set
-            "validation_1": {"<metric>": [v0, v1, ...]},  # val set
-        }
-    """
+    """Return the per-iteration evaluation results stored on the fitted model."""
     return model.evals_result()
 
 
@@ -230,33 +159,14 @@ def predict(
     model: xgb.XGBClassifier,
     X: pd.DataFrame,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return hard predictions and probability scores for *X*.
-
-    Parameters
-    ----------
-    model : xgb.XGBClassifier
-        Fitted model.
-    X : pd.DataFrame
-        Input features.
-
-    Returns
-    -------
-    y_pred : np.ndarray, shape (n_samples,)
-        Argmax class indices.
-    y_proba : np.ndarray, shape (n_samples, n_classes)
-        Per-class probability estimates.
-    """
+    """Return hard predictions and probability scores for the given features."""
     y_proba: np.ndarray = model.predict_proba(X)
     y_pred: np.ndarray = np.argmax(y_proba, axis=1)
     return y_pred, y_proba
 
 
 def save_model(model: xgb.XGBClassifier, path: Path) -> None:
-    """Save the XGBoost model in its native binary format (.ubj).
-
-    The native format preserves all model metadata including the best
-    iteration, so the loaded model behaves identically to the original.
-    """
+    """Save the XGBoost model in its native binary format."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     model.save_model(str(path))
@@ -264,7 +174,7 @@ def save_model(model: xgb.XGBClassifier, path: Path) -> None:
 
 
 def load_model(path: Path) -> xgb.XGBClassifier:
-    """Load an XGBoost model from a native binary file."""
+    """Load an XGBoost model from a native binary checkpoint."""
     model = xgb.XGBClassifier()
     model.load_model(str(Path(path)))
     log.info("Model loaded from %s", path)
