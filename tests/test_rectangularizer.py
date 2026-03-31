@@ -4,7 +4,7 @@ import awkward as ak
 import pandas as pd
 import pytest
 
-from src.processing.rectangularizer import fill_padding, rectangularize_pad_array
+from src.processing.rectangularizer import fill_padding, rectangularize
 
 
 def test_pad_array_expands_jagged_features():
@@ -14,7 +14,7 @@ def test_pad_array_expands_jagged_features():
             "jet_pt": [[30.0, 40.0], [50.0], [60.0, 70.0, 80.0]],
         }
     )
-    df = rectangularize_pad_array(array, padding_threshold=2)
+    df = rectangularize(array, padding_threshold=2)
 
     assert "jet_pt_0" in df.columns
     assert "jet_pt_1" in df.columns
@@ -29,7 +29,7 @@ def test_pad_array_drops_constant_columns():
             "constant": [1.0, 1.0, 1.0],
         }
     )
-    df = rectangularize_pad_array(array, padding_threshold=1)
+    df = rectangularize(array, padding_threshold=1)
 
     assert "constant" not in df.columns
     assert "met" in df.columns
@@ -42,8 +42,8 @@ def test_pad_array_nan_threshold_drops_sparse_columns():
             "jet_pt": [[30.0], [], [60.0]],
         }
     )
-    df_all = rectangularize_pad_array(array, padding_threshold=2, nan_threshold=0.0)
-    df_strict = rectangularize_pad_array(array, padding_threshold=2, nan_threshold=1.0)
+    df_all = rectangularize(array, padding_threshold=2, nan_threshold=0.0)
+    df_strict = rectangularize(array, padding_threshold=2, nan_threshold=1.0)
 
     assert len(df_all.columns) >= len(df_strict.columns)
 

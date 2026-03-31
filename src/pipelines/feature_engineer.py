@@ -11,7 +11,7 @@ from src.processing.analysis import get_output_paths
 from src.processing.features import (
     assign_class_weights,
     drop_features,
-    extract_feature_from_array,
+    extract_feature,
     resolve_features_to_drop,
 )
 from src.processing.io import load_samples, save_dataframe
@@ -21,7 +21,7 @@ from src.processing.merger import (
     group_samples,
     split_mc_data,
 )
-from src.processing.rectangularizer import fill_padding, rectangularize_pad_array
+from src.processing.rectangularizer import fill_padding, rectangularize
 from src.processing.validation import validate_mc
 
 log = logging.getLogger(__name__)
@@ -57,20 +57,20 @@ def feature_engineer(cfg: DictConfig) -> None:
     samples_mc = dict_to_array(samples_mc)
     samples_data = dict_to_array(samples_data)
 
-    event_origin = extract_feature_from_array(samples_mc, "eventOrigin")
-    tau_n = extract_feature_from_array(samples_mc, "tau_n")
+    event_origin = extract_feature(samples_mc, "eventOrigin")
+    tau_n = extract_feature(samples_mc, "tau_n")
 
     features_to_drop = resolve_features_to_drop(cfg)
     samples_mc = drop_features(samples_mc, features_to_drop)
     samples_data = drop_features(samples_data, features_to_drop)
     log.info("Dropped %d features", len(features_to_drop))
 
-    df_mc = rectangularize_pad_array(
+    df_mc = rectangularize(
         array_in=samples_mc,
         padding_threshold=cfg.data.padding_threshold,
         nan_threshold=cfg.data.nan_threshold,
     )
-    df_data = rectangularize_pad_array(
+    df_data = rectangularize(
         array_in=samples_data,
         padding_threshold=cfg.data.padding_threshold,
         nan_threshold=0.0,
