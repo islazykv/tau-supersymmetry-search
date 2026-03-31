@@ -21,30 +21,7 @@ def compute_significance_grid(
     bkg_uncertainty_frac: float = 0.3,
     score_column: str = "p_signal",
 ) -> dict[str, tuple[list[float], list[int], list[int]]]:
-    """Compute expected CLs for each signal mass point in the Signal Region.
-
-    Uses pyhf's uncorrelated-background model with the q-tilde test statistic.
-
-    Parameters
-    ----------
-    sr_df : pd.DataFrame
-        Signal Region DataFrame with ``eventOrigin``, ``weight``, and *score_column*.
-    signal_threshold : float
-        Lower edge of the signal score binning (upper edge is 1).
-    background_names : list[str]
-        Names of background classes as they appear in ``eventOrigin``.
-    bins : int
-        Number of score bins between *signal_threshold* and 1.
-    bkg_uncertainty_frac : float
-        Fractional systematic uncertainty on the background yield per bin.
-    score_column : str
-        Column containing the signal probability score.
-
-    Returns
-    -------
-    dict mapping signal type prefix (e.g. ``"GG"``, ``"SS"``) to a tuple of
-    ``(cls_values, mass1_list, mass2_list)``.
-    """
+    """Compute expected CLs for each signal mass point in the Signal Region."""
     bin_edges = np.linspace(signal_threshold, 1, bins + 1)
 
     df_bkg = sr_df[sr_df["eventOrigin"].isin(background_names)]
@@ -107,24 +84,7 @@ def construct_grid(
     y_list: list[int],
     z_list: list[float],
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Pivot significance values into a 2D grid for heatmap plotting.
-
-    Parameters
-    ----------
-    x_list, y_list : list[int]
-        Mass coordinates.
-    z_list : list[float]
-        Significance values.
-
-    Returns
-    -------
-    grid : np.ndarray
-        Pivoted 2D values array.
-    x_ticks : np.ndarray
-        Sorted unique x-axis mass values.
-    y_ticks : np.ndarray
-        Sorted unique y-axis mass values.
-    """
+    """Pivot significance values into a 2D grid for heatmap plotting."""
     df = pd.DataFrame({"x": x_list, "y": y_list, "z": z_list})
     pivoted = df.pivot(index="y", columns="x", values="z")
     return pivoted.values, pivoted.columns.values, pivoted.index.values

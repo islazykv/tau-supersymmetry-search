@@ -12,11 +12,11 @@ def merge_backgrounds(
     samples: dict[str, ak.Array],
     cfg: DictConfig,
 ) -> dict[str, ak.Array]:
-    """Merge background samples into groups according to the configured strategy.
+    """Merge background samples according to the configured strategy.
 
-    Args:
-        samples: Dict mapping sample IDs to awkward arrays.
-        cfg: Hydra DictConfig with 'merge.background_strategy' key.
+    Strategies:
+        as_one     -- concatenate all samples into a single array.
+        as_primary -- group samples by primary process categories.
     """
     strategy = cfg.merge.background_strategy
 
@@ -44,12 +44,7 @@ def group_samples(
     samples: dict[str, ak.Array],
     cfg: DictConfig,
 ) -> dict[str, dict[str, ak.Array]]:
-    """Group a flat sample dict into data/background/signal categories.
-
-    Args:
-        samples: Dict mapping sample IDs to awkward arrays.
-        cfg: Hydra DictConfig with 'samples' section.
-    """
+    """Group a flat sample dict into data/background/signal categories."""
     data_ids: set[str] = set()
     if cfg.samples.data.get("enabled", False):
         data_ids = {
@@ -82,10 +77,11 @@ def merge_signals(
 ) -> dict[str, ak.Array]:
     """Merge signal samples according to the configured strategy.
 
-    Args:
-        signal: Dict mapping signal sample IDs to awkward arrays.
-        cfg: Hydra DictConfig with 'merge.signal_strategy' key.
-            Supported strategies: 'as_is', 'as_one', 'as_type', 'as_mass'.
+    Strategies:
+        as_is   -- keep each sample separate.
+        as_one  -- concatenate all into a single array.
+        as_type -- group by production type prefix.
+        as_mass -- group by mass threshold bins per type.
     """
     strategy = cfg.merge.signal_strategy
 
@@ -140,11 +136,7 @@ def merge_signals(
 def split_mc_data(
     grouped: dict[str, dict[str, ak.Array]],
 ) -> tuple[dict[str, ak.Array], dict[str, ak.Array]]:
-    """Split grouped samples into MC (background + signal) and data dicts.
-
-    Args:
-        grouped: Dict with 'background', 'signal', and 'data' keys.
-    """
+    """Split grouped samples into MC (background + signal) and data dicts."""
     samples_mc = {**grouped.get("background", {}), **grouped.get("signal", {})}
     samples_data = dict(grouped.get("data", {}))
     return samples_mc, samples_data
@@ -154,29 +146,16 @@ def combine_background_signal(
     background: dict[str, ak.Array],
     signal: dict[str, ak.Array],
 ) -> dict[str, ak.Array]:
-    """Combine background and signal sample dicts into one.
-
-    Args:
-        background: Dict mapping background sample IDs to arrays.
-        signal: Dict mapping signal sample IDs to arrays.
-    """
+    """Combine background and signal sample dicts into one."""
     return {**background, **signal}
 
 
 def assign_class(samples: dict[str, ak.Array]) -> None:
-    """Add an integer 'class' field to each sample in-place.
-
-    Args:
-        samples: Dict mapping sample IDs to awkward arrays.
-    """
+    """Add an integer 'class' field to each sample in-place."""
     for i, key in enumerate(samples):
         samples[key]["class"] = i
 
 
 def dict_to_array(samples: dict[str, ak.Array]) -> ak.Array:
-    """Concatenate all samples into a single awkward array.
-
-    Args:
-        samples: Dict mapping sample IDs to awkward arrays.
-    """
+    """Concatenate all samples into a single awkward array."""
     return ak.concatenate(list(samples.values()), axis=0)

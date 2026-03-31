@@ -324,10 +324,7 @@ def plot_permutation_importance(
     n_repeats: int = 5,
     seed: int = 42,
 ) -> plt.Figure:
-    """Permutation importance for a DNN model, plotted as a horizontal bar chart.
-
-    Uses a subsample of ``X`` for speed.  The scoring function is accuracy.
-    """
+    """Plot permutation importance for a DNN as a horizontal bar chart."""
     from sklearn.inspection import permutation_importance as _perm_importance
 
     from src.models.dnn import predict as dnn_predict
@@ -339,18 +336,21 @@ def plot_permutation_importance(
     y_sub = y[idx]
 
     class _ScoringWrapper:
-        """Wrap DNN predict into a sklearn-compatible estimator for permutation_importance."""
+        """Sklearn-compatible estimator wrapper around a DNN for permutation importance."""
 
         def __init__(self, model, scaler, device):
+            """Initialize with a DNN model, scaler, and device."""
             self._model = model
             self._scaler = scaler
             self._device = device
             self.classes_ = np.arange(model.config["n_classes"])
 
         def fit(self, X, y):
+            """No-op fit to satisfy the sklearn estimator interface."""
             return self
 
         def predict(self, X):
+            """Return hard predictions by delegating to the DNN predict function."""
             y_pred, _ = dnn_predict(
                 self._model,
                 pd.DataFrame(X, columns=feature_names),
@@ -394,32 +394,7 @@ def compute_dnn_shap_values(
     n_background: int = 100,
     seed: int = 42,
 ) -> tuple[list[np.ndarray], pd.DataFrame]:
-    """Compute SHAP values for a DNN using GradientExplainer.
-
-    Parameters
-    ----------
-    model : DNNClassifier
-        Trained PyTorch model.
-    X : pd.DataFrame
-        Full feature DataFrame (pre-scaling).
-    scaler : MinMaxScaler
-        Fitted scaler.
-    device : torch.device
-        Model device.
-    n_samples : int
-        Number of events to explain.
-    n_background : int
-        Number of background samples for the explainer.
-    seed : int
-        Random seed.
-
-    Returns
-    -------
-    shap_values : list[np.ndarray]
-        Per-class SHAP values, each of shape ``(n_samples, n_features)``.
-    X_sample : pd.DataFrame
-        The (unscaled) feature subsample used for explanations.
-    """
+    """Compute per-class SHAP values for a DNN using GradientExplainer."""
     import shap
     import torch
 

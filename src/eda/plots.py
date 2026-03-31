@@ -10,7 +10,7 @@ _NON_TRAINING_COLS = {"class", "class_weight", "tau_n", "eventOrigin"}
 
 
 def _resolve_class_labels(df: pd.DataFrame) -> list[str]:
-    """Derive ordered class labels from eventOrigin, falling back to integer class indices."""
+    """Derive ordered class labels from eventOrigin, falling back to integer indices if absent."""
     if "eventOrigin" in df.columns:
         return df.groupby("class")["eventOrigin"].first().sort_index().tolist()
     return [str(i) for i in sorted(df["class"].unique())]
@@ -20,7 +20,7 @@ def plot_class_balance(
     df: pd.DataFrame,
     class_labels: list[str] | None = None,
 ) -> plt.Figure:
-    """Plot unweighted and class-weighted event counts per class side by side."""
+    """Plot unweighted and class-weighted event counts per class."""
     class_order = sorted(df["class"].unique())
     if class_labels is None:
         class_labels = _resolve_class_labels(df)
@@ -62,7 +62,7 @@ def plot_correlation_matrix(
     features: list[str] | None = None,
     exclude: list[str] | None = None,
 ) -> plt.Figure:
-    """Plot a Pearson correlation heatmap for numeric training features."""
+    """Plot a Pearson correlation heatmap for numeric features."""
     excluded = _NON_TRAINING_COLS | set(exclude or [])
     if features is None:
         features = [
@@ -100,7 +100,7 @@ def plot_feature_distributions(
     n_cols: int = 3,
     n_bins: int = 50,
 ) -> plt.Figure:
-    """Plot per-class normalized histograms for each feature in a grid layout."""
+    """Plot per-class normalized histograms for each feature in a grid."""
     class_order = sorted(df["class"].unique())
     if class_labels is None:
         class_labels = _resolve_class_labels(df)

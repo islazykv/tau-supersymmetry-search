@@ -27,24 +27,14 @@ class AnalysisConfig:
 
 
 def _apply_excludes(samples: list[dict], excludes: list[str]) -> list[Sample]:
-    """Filter sample dicts and return Sample objects, removing excluded IDs.
-
-    Args:
-        samples: List of sample dicts, each with 'id' and 'label' keys.
-        excludes: Sample IDs to exclude from the result.
-    """
+    """Filter sample dicts and return Sample objects, removing excluded IDs."""
     return [
         Sample(id=s["id"], label=s["label"]) for s in samples if s["id"] not in excludes
     ]
 
 
 def _discover_signals(scan_path: str, filter_patterns: list[str]) -> list[Sample]:
-    """Discover signal samples from disk, matching any of the filter patterns.
-
-    Args:
-        scan_path: Directory path to scan for signal files.
-        filter_patterns: Substrings to match against filenames.
-    """
+    """Discover signal samples from disk, matching any of the filter patterns."""
     if not os.path.isdir(scan_path):
         return []
 
@@ -58,11 +48,7 @@ def _discover_signals(scan_path: str, filter_patterns: list[str]) -> list[Sample
 
 
 def resolve_samples(cfg: DictConfig) -> dict[str, list[Sample]]:
-    """Build categorized sample lists from Hydra config.
-
-    Args:
-        cfg: Hydra DictConfig with 'samples' and 'analysis' sections.
-    """
+    """Build categorized sample lists from Hydra config."""
     result: dict[str, list[Sample]] = {}
 
     data_cfg = cfg.samples.data
@@ -96,11 +82,7 @@ def resolve_samples(cfg: DictConfig) -> dict[str, list[Sample]]:
 
 
 def get_output_paths(cfg: DictConfig) -> dict[str, Path]:
-    """Compute output directory paths from analysis config.
-
-    Args:
-        cfg: Hydra DictConfig with 'analysis' and 'data' sections.
-    """
+    """Compute output directory paths from analysis config."""
     analysis = cfg.analysis
     base = (
         Path(cfg.data.processed_path)
