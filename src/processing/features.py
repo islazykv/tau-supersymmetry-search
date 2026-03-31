@@ -5,7 +5,7 @@ import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
 
-def extract_feature_from_array(array_in: ak.Array, feature_name: str) -> ak.Array:
+def extract_feature(array_in: ak.Array, feature_name: str) -> ak.Array:
     """Extract a single feature field from an awkward array."""
     return array_in[feature_name]
 

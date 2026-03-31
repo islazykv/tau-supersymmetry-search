@@ -142,7 +142,7 @@ def split_mc_data(
     return samples_mc, samples_data
 
 
-def combine_background_signal(
+def combine_samples(
     background: dict[str, ak.Array],
     signal: dict[str, ak.Array],
 ) -> dict[str, ak.Array]:

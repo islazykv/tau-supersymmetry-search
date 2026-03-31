@@ -6,7 +6,7 @@ import awkward as ak
 import pandas as pd
 
 
-def rectangularize_pad_array(
+def rectangularize(
     array_in: ak.Array,
     padding_threshold: int,
     nan_threshold: float = 0.0,

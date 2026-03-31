@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 
 from src.processing.merger import (
     assign_class,
-    combine_background_signal,
+    combine_samples,
     dict_to_array,
     group_samples,
     merge_backgrounds,
@@ -58,10 +58,10 @@ def test_merge_backgrounds_as_primary():
     assert len(result["diboson"]) == 4
 
 
-def test_combine_background_signal():
+def test_combine_samples():
     bg = {"background": _make_array(5)}
     sig = {"signal_100_200": _make_array(3)}
-    result = combine_background_signal(bg, sig)
+    result = combine_samples(bg, sig)
     assert set(result.keys()) == {"background", "signal_100_200"}
 
 
