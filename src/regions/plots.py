@@ -114,7 +114,7 @@ def plot_signal_score(
     ymin, ymax = ax.get_ylim()
     if scale == "linear":
         ax.set_ylim([0, ymax * 1.3])
-        ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 8))
+        ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
     elif scale == "log":
         ax.set_yscale("log")
         ax.set_ylim([1, ymax * 10])
@@ -127,6 +127,7 @@ def plot_signal_score(
     ax.tick_params(axis="both", labelsize=12)
     ax.legend(**_LEGEND_KW)
     ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final")
+    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.12)
 
     return fig
 

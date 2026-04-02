@@ -16,6 +16,7 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
+from sklearn.base import BaseEstimator
 from sklearn.preprocessing import label_binarize
 
 _LEGEND_KW: dict = dict(
@@ -62,10 +63,11 @@ def plot_feature_importance(
     importances = model.feature_importances_
     top_idx = np.argsort(importances)[-n_features:]
 
-    fig, ax = plt.subplots(figsize=(8, max(4, len(top_idx) * 0.45)))
+    fig, ax = plt.subplots(figsize=(8, max(4, len(top_idx) * 0.35)))
     ax.barh(range(len(top_idx)), importances[top_idx])
     ax.set_yticks(range(len(top_idx)))
     ax.set_yticklabels([_latex_safe(feature_names[i]) for i in top_idx], fontsize=10)
+    ax.set_ylim(-0.5, len(top_idx) + 1.0)
     ax.set_xlabel("Importance Score")
     ax.set_title("Feature Importance")
     ax.grid(True, alpha=0.3, axis="x")
@@ -110,7 +112,11 @@ def plot_shap_importance(
         show=False,
     )
     fig = plt.gcf()
-    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=fig.axes[0])
+    ax = fig.axes[0]
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(ymin, ymax + 1.5)
+    ax.set_xlabel("Mean |SHAP value|")
+    ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)
     fig.tight_layout()
     return fig
 
@@ -124,7 +130,7 @@ def plot_confusion_matrix(
     cm = confusion_matrix(y_true, y_pred)
     cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True) * 100
     annot = np.array(
-        [f"{c:,}\n{p:.1f}%" for c, p in zip(cm.flatten(), cm_norm.flatten())]
+        [f"{c:,}\n{p:.1f}\\%" for c, p in zip(cm.flatten(), cm_norm.flatten())]
     ).reshape(cm.shape)
 
     figsize = 14 if len(class_labels) <= 8 else 20
@@ -188,7 +194,7 @@ def plot_classification_report(
         vmax=100,
         cbar_kws={"format": "%.0f%%"},
     )
-    axes[0].set_title("Classification Report (%)")
+    axes[0].set_title(r"Classification Report (\%)")
     axes[0].set_xlabel("")
     axes[0].set_ylabel("")
 
@@ -335,7 +341,7 @@ def plot_permutation_importance(
     X_sub = X.iloc[idx].reset_index(drop=True)
     y_sub = y[idx]
 
-    class _ScoringWrapper:
+    class _ScoringWrapper(BaseEstimator):
         """Sklearn-compatible estimator wrapper around a DNN for permutation importance."""
 
         def __init__(self, model, scaler, device):
@@ -373,10 +379,11 @@ def plot_permutation_importance(
     importances = result.importances_mean
     top_idx = np.argsort(importances)[-n_features:]
 
-    fig, ax = plt.subplots(figsize=(8, max(4, len(top_idx) * 0.45)))
+    fig, ax = plt.subplots(figsize=(8, max(4, len(top_idx) * 0.35)))
     ax.barh(range(len(top_idx)), importances[top_idx])
     ax.set_yticks(range(len(top_idx)))
     ax.set_yticklabels([_latex_safe(feature_names[i]) for i in top_idx], fontsize=10)
+    ax.set_ylim(-0.5, len(top_idx) + 1.0)
     ax.set_xlabel("Mean Accuracy Decrease")
     ax.set_title("Permutation Importance")
     ax.grid(True, alpha=0.3, axis="x")
