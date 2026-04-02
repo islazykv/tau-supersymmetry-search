@@ -46,3 +46,14 @@ def save_figure(fig: plt.Figure, path: Path, dpi: int = 150) -> None:
         bbox_inches="tight",
         facecolor="white",
     )
+
+
+def save_plotly_figure(
+    fig, path: Path, width: int = 1200, height: int = 700, scale: int = 5
+) -> None:
+    """Save a Plotly figure as PNG and show it as a static image."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.update_layout(width=width, height=height)
+    fig.write_image(path, scale=scale)
+    fig.show(renderer="png", width=width, height=height)
