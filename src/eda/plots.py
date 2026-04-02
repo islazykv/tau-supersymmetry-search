@@ -127,10 +127,10 @@ def plot_feature_distributions(
         ax.set_xlabel(feature)
         ax.set_ylabel("Density")
         ax.legend()
+        ampl.draw_atlas_label(0.05, 0.95, simulation=True, status="final", ax=ax)
 
     for ax in axes_flat[n:]:
         ax.set_visible(False)
 
-    fig.suptitle("Feature distributions by class")
     fig.tight_layout()
     return fig
