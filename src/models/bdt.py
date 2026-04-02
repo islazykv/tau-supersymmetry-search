@@ -72,10 +72,20 @@ def train(
     verbose: bool = True,
 ) -> xgb.XGBClassifier:
     """Train an XGBoost classifier with early stopping on the validation set."""
-    model = xgb.XGBClassifier(
-        **params,
-        early_stopping_rounds=early_stopping_rounds,
+    pbar = (
+        tqdm(total=params.get("n_estimators", 100), desc="Training", unit="tree")
+        if verbose
+        else None
     )
+
+    ctor_kwargs: dict = {
+        **params,
+        "early_stopping_rounds": early_stopping_rounds,
+    }
+    if pbar is not None:
+        ctor_kwargs["callbacks"] = [_TqdmCallback(pbar)]
+
+    model = xgb.XGBClassifier(**ctor_kwargs)
 
     fit_kwargs: dict = {
         "eval_set": [(X_train, y_train), (X_val, y_val)],
@@ -83,14 +93,6 @@ def train(
     }
     if w_train is not None:
         fit_kwargs["sample_weight"] = w_train.to_numpy()
-
-    pbar = (
-        tqdm(total=params.get("n_estimators", 100), desc="Training", unit="tree")
-        if verbose
-        else None
-    )
-    if pbar is not None:
-        fit_kwargs["callbacks"] = [_TqdmCallback(pbar)]
 
     model.fit(X_train, y_train, **fit_kwargs)
 
@@ -169,7 +171,7 @@ def save_model(model: xgb.XGBClassifier, path: Path) -> None:
     """Save the XGBoost model in its native binary format."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    model.save_model(str(path))
+    model.get_booster().save_model(str(path))
     log.info("Model saved to %s", path)
 
 
