@@ -78,7 +78,7 @@ def bdt_objective(
     folds: list[tuple],
     n_classes: int,
 ) -> float:
-    """XGBoost k-fold CV objective with per-round and cross-fold pruning."""
+    """XGBoost objective with per-round and cross-fold pruning."""
     search_space = OmegaConf.to_container(cfg.tuning.search_space.xgboost, resolve=True)
     suggested = suggest_params(trial, search_space, "xgboost")
 
@@ -132,7 +132,7 @@ def dnn_objective(
     n_classes: int,
     device: torch.device,
 ) -> float:
-    """DNN k-fold CV objective with epoch-level pruning."""
+    """DNN objective with epoch-level pruning."""
     search_space = OmegaConf.to_container(cfg.tuning.search_space.dnn, resolve=True)
     suggested = suggest_params(trial, search_space, "dnn")
 
