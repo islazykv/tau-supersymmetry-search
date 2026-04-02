@@ -240,6 +240,12 @@ def _train_dnn_with_pruning(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
     grad_scaler = GradScaler(enabled=use_amp)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode="min",
+        factor=0.5,
+        patience=10,
+    )
 
     best_val_loss = float("inf")
     patience_counter = 0
@@ -261,6 +267,8 @@ def _train_dnn_with_pruning(
         with torch.no_grad(), autocast(enabled=use_amp):
             val_logits = model(X_val_t)
             epoch_val_loss = criterion(val_logits, y_val_t).item()
+
+        scheduler.step(epoch_val_loss)
 
         if epoch_val_loss < best_val_loss:
             best_val_loss = epoch_val_loss
