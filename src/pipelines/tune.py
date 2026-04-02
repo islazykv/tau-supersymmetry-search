@@ -11,8 +11,9 @@ from omegaconf import DictConfig, OmegaConf
 
 from src.eda.utils import get_class_names
 from src.models.dnn import resolve_device
-from src.models.splits import kfold_split, prepare_features_target
+from src.models.splits import kfold_split, prepare_features_target, train_test_split
 from src.models.tuning import (
+    TqdmTrialCallback,
     bdt_objective,
     create_study,
     dnn_objective,
@@ -58,12 +59,27 @@ def tune(cfg: DictConfig) -> None:
         n_classes = len(class_names)
         log.info("Classes (%d): %s", n_classes, class_names)
 
+        subsample = cfg.tuning.get("subsample_fraction", 1.0)
+        if subsample < 1.0:
+            df_mc = df_mc.groupby("class", group_keys=False).apply(
+                lambda g: g.sample(frac=subsample, random_state=cfg.seed)
+            )
+            log.info("Subsampled to %.0f%%: %d events", subsample * 100, len(df_mc))
+
         X, y, weights = prepare_features_target(df_mc)
         mlflow.log_param("n_features", X.shape[1])
 
-        n_splits = cfg.tuning.n_splits
-        folds = kfold_split(X, y, weights, n_splits=n_splits, seed=cfg.seed)
-        log.info("K-fold: %d stratified folds", n_splits)
+        split_method = cfg.tuning.get("split_method", "kfold")
+        if split_method == "kfold":
+            n_splits = cfg.tuning.n_splits
+            folds = kfold_split(X, y, weights, n_splits=n_splits, seed=cfg.seed)
+            log.info("K-fold: %d stratified folds", n_splits)
+        else:
+            test_size = cfg.tuning.get("test_size", 0.2)
+            folds = [
+                train_test_split(X, y, weights, test_size=test_size, seed=cfg.seed)
+            ]
+            log.info("Train-test split: %.0f%% test", test_size * 100)
 
         storage_path = models_dir / cfg.tuning.storage_filename
         study = create_study(cfg, storage_path)
@@ -86,6 +102,8 @@ def tune(cfg: DictConfig) -> None:
 
         model_name = cfg.model.name
         n_trials = cfg.tuning.n_trials
+        tqdm_cb = TqdmTrialCallback(n_trials)
+        callbacks.append(tqdm_cb)
 
         if model_name == "xgboost":
             study.optimize(

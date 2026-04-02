@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import optuna
 import pandas as pd
+from tqdm.auto import tqdm
 import torch
 import torch.nn as nn
 import xgboost as xgb
@@ -26,6 +27,20 @@ except ImportError:
     from torch.cuda.amp import GradScaler, autocast  # PyTorch < 2.3
 
 log = logging.getLogger(__name__)
+
+
+class TqdmTrialCallback:
+    """Optuna callback that displays a tqdm progress bar across trials."""
+
+    def __init__(self, n_trials: int) -> None:
+        self._bar = tqdm(total=n_trials, desc="Trial 0", unit="trial")
+
+    def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial) -> None:
+        self._bar.set_description(f"Trial {trial.number}")
+        self._bar.update(1)
+
+    def close(self) -> None:
+        self._bar.close()
 
 
 def suggest_params(
@@ -74,18 +89,24 @@ def bdt_objective(
 
     fold_scores: list[float] = []
 
-    for fold_idx, (X_tr, X_te, y_tr, y_te, w_tr, _) in enumerate(folds):
+    fold_iter = (
+        tqdm(folds, desc=f"Fold {trial.number}", leave=False)
+        if len(folds) > 1
+        else folds
+    )
+
+    for fold_idx, (X_tr, X_te, y_tr, y_te, w_tr, _) in enumerate(fold_iter):
+        pruning_cb = XGBoostPruningCallback(trial, f"validation_1-{metric}")
+
         model = xgb.XGBClassifier(
             **base_params,
             early_stopping_rounds=early_stopping_rounds,
+            callbacks=[pruning_cb],
         )
-
-        pruning_cb = XGBoostPruningCallback(trial, f"validation_1-{metric}")
 
         fit_kwargs: dict = {
             "eval_set": [(X_tr, y_tr), (X_te, y_te)],
             "verbose": False,
-            "callbacks": [pruning_cb],
         }
         if w_tr is not None:
             fit_kwargs["sample_weight"] = w_tr.to_numpy()
@@ -126,7 +147,13 @@ def dnn_objective(
 
     fold_best_losses: list[float] = []
 
-    for fold_idx, (X_tr, X_te, y_tr, y_te, w_tr, _) in enumerate(folds):
+    fold_iter = (
+        tqdm(folds, desc=f"Fold {trial.number}", leave=False)
+        if len(folds) > 1
+        else folds
+    )
+
+    for fold_idx, (X_tr, X_te, y_tr, y_te, w_tr, _) in enumerate(fold_iter):
         n_features = X_tr.shape[1]
 
         best_val_loss = _train_dnn_with_pruning(
