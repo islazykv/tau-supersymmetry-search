@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 def tune(cfg: DictConfig) -> None:
-    """Run Optuna hyperparameter tuning with k-fold CV and MLflow tracking."""
+    """Run Optuna hyperparameter tuning with k-fold CV or train-test split and MLflow tracking."""
     root = pyrootutils.find_root(indicator=[".git", "pyproject.toml"])
 
     log.info("Starting hyperparameter tuning:\n%s", OmegaConf.to_yaml(cfg))

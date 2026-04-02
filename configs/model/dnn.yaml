@@ -1,13 +1,17 @@
 name: "pytorch_dnn"
 
-hidden_sizes: [64, 64, 64]
+hidden_sizes: [128, 128, 128, 128, 128]
 activation: "ReLU"
 dropout: 0.2
 
 n_epochs: 1000
-batch_size: 1024
+batch_size: 4096
 
-learning_rate: 0.005
+learning_rate: 0.001
 weight_decay: 1e-5
+
+scheduler:
+  factor: 0.5
+  patience: 10
 
 amp: true

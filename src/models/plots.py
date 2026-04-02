@@ -96,6 +96,7 @@ def plot_dnn_training_curves(
     train_loss = history["train_loss"]
     val_loss = history["val_loss"]
     best_epoch = history["best_epoch"]
+    lr = history.get("lr")
 
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.plot(train_loss, label="Training loss", linewidth=1.5)
@@ -110,6 +111,14 @@ def plot_dnn_training_curves(
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss (CrossEntropy)")
     ax.set_title("Loss Plot")
+
+    if lr is not None:
+        ax_lr = ax.twinx()
+        ax_lr.plot(lr, color="grey", linewidth=1.0, alpha=0.5, label="Learning rate")
+        ax_lr.set_ylabel("Learning Rate")
+        ax_lr.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+        ax.plot([], [], color="grey", linewidth=1.0, alpha=0.5, label="Learning rate")
+
     ax.legend(**_LEGEND_KW)
     ax.grid(True, alpha=0.3)
     ampl.draw_atlas_label(0.02, 0.97, simulation=True, status="final", ax=ax)

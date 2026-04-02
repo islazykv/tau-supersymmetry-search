@@ -158,8 +158,18 @@ def train(
     )
     grad_scaler = GradScaler(enabled=use_amp)
 
+    # LR scheduler: ReduceLROnPlateau on validation loss
+    sched_cfg = mcfg.get("scheduler", {})
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode="min",
+        factor=sched_cfg.get("factor", 0.5),
+        patience=sched_cfg.get("patience", 10),
+    )
+
     train_loss_history: list[float] = []
     val_loss_history: list[float] = []
+    lr_history: list[float] = []
     best_val_loss = float("inf")
     best_state: dict | None = None
     best_epoch = 0
@@ -190,6 +200,9 @@ def train(
             epoch_val_loss = criterion(val_logits, y_va).item()
 
         val_loss_history.append(epoch_val_loss)
+        current_lr = optimizer.param_groups[0]["lr"]
+        lr_history.append(current_lr)
+        scheduler.step(epoch_val_loss)
 
         if epoch_val_loss < best_val_loss:
             best_val_loss = epoch_val_loss
@@ -203,6 +216,7 @@ def train(
             pbar.set_postfix(
                 train_loss=f"{epoch_train_loss:.4f}",
                 val_loss=f"{epoch_val_loss:.4f}",
+                lr=f"{current_lr:.1e}",
             )
             pbar.update(1)
 
@@ -225,6 +239,7 @@ def train(
     history = {
         "train_loss": train_loss_history,
         "val_loss": val_loss_history,
+        "lr": lr_history,
         "best_epoch": best_epoch,
     }
     return model, history
