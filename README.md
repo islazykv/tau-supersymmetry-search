@@ -7,9 +7,12 @@
 [![DVC](https://img.shields.io/badge/Pipeline-DVC-13ADC7?logo=dvc)](https://dvc.org/)
 [![uv](https://img.shields.io/badge/Deps-uv-DE5FE9)](https://docs.astral.sh/uv/)
 
-Supersymmetry search with tau leptons in ATLAS data using machine learning for signal-background multi-class classification.
+Supersymmetry search with tau leptons in CERN ATLAS data using supervised machine learning for multiclass-classification of background and signal events.
 
-Built on ATLAS Run 2 data, this project implements a full ML pipeline — from ROOT ntuples to signal region optimisation — using XGBoost Boosted Decision Trees (BDTs) and PyTorch Deep Neural Networks (DNNs).
+Built on ATLAS Run 2 & Run 3 data, this project implements a full ML pipeline — from ROOT ntuples to signal region optimization — using XGBoost Boosted Decision Trees (BDTs) and PyTorch Deep Neural Networks (DNNs).
+
+To conduct this search, the models were trained on both background and signal events, allowing potential SUSY signatures to be isolated via multiclass classification. The results of this analysis are published [here](https://arxiv.org/abs/2507.00296). Unfortunately, no SUSY signals were observed in the experimental data.
+
 
 ## Pipeline
 
