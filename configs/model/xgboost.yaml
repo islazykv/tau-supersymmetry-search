@@ -1,7 +1,7 @@
 name: "xgboost"
 
 booster: "gbtree"
-n_estimators: 10000
+n_estimators: 1000
 learning_rate: 0.032
 max_depth: 8
 min_child_weight: 4
